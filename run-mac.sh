@@ -22,9 +22,16 @@ fi
 echo "✓ Node.js detectado: $(node -v)"
 
 # 2. Verificar dependências (node_modules)
-if [ ! -d "node_modules" ] || [ ! -d "node_modules/electron" ]; then
-    echo "📦 Instalando dependências necessárias..."
-    npm install
+if [ ! -d "node_modules" ] || [ ! -d "node_modules/electron" ] || [ ! -f "node_modules/electron/path.txt" ]; then
+    echo "📦 Verificando/restaurando dependências do Electron..."
+    if [ -f "node_modules/electron/install.js" ]; then
+        node node_modules/electron/install.js || true
+    else
+        npm install
+    fi
+    if [ ! -f "node_modules/electron/path.txt" ] && [ -d "node_modules/electron/dist/Electron.app" ]; then
+        echo -n "Electron.app/Contents/MacOS/Electron" > node_modules/electron/path.txt
+    fi
 fi
 
 echo "✓ Dependências prontas!"

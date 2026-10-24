@@ -26,7 +26,10 @@ const api = window.vsTollsAPI || {
   getSerialPorts: () => fetch('/api/maker/ports').then(r => r.json()),
   releaseSerialPort: (path) => fetch(`/api/maker/release?path=${encodeURIComponent(path)}`).then(r => r.json()),
   exportReport: (format) => fetch(`/api/report?format=${format}`).then(r => r.json()),
-  openWidget: () => (window.vsTollsAPI && window.vsTollsAPI.openWidget) ? window.vsTollsAPI.openWidget() : fetch('/api/widget/status').then(r => r.json()),
+  openWidget: (type) => (window.vsTollsAPI && window.vsTollsAPI.openWidget) ? window.vsTollsAPI.openWidget(type) : fetch(`/api/widget/open?type=${type || 'overview'}`).then(r => r.json()),
+  closeWidget: (type) => (window.vsTollsAPI && window.vsTollsAPI.closeWidget) ? window.vsTollsAPI.closeWidget(type) : fetch(`/api/widget/close?type=${type || 'overview'}`).then(r => r.json()),
+  toggleWidgetFloating: () => (window.vsTollsAPI && window.vsTollsAPI.toggleWidgetFloating) ? window.vsTollsAPI.toggleWidgetFloating() : fetch('/api/widget/floating').then(r => r.json()),
+  getWidgetsStatus: () => (window.vsTollsAPI && window.vsTollsAPI.getWidgetsStatus) ? window.vsTollsAPI.getWidgetsStatus() : fetch('/api/widget/status').then(r => r.json()),
   getAutoStart: () => (window.vsTollsAPI && window.vsTollsAPI.getAutoStart) ? window.vsTollsAPI.getAutoStart() : fetch('/api/autostart/status').then(r => r.json()),
   setAutoStart: (enable, widgetOnly) => (window.vsTollsAPI && window.vsTollsAPI.setAutoStart) ? window.vsTollsAPI.setAutoStart(enable, widgetOnly) : fetch(`/api/autostart/toggle?enable=${enable}&widgetOnly=${widgetOnly}`).then(r => r.json())
 };
@@ -971,7 +974,8 @@ document.getElementById('btnExportReport').addEventListener('click', () => expor
 
 // Page navigation hook
 function onPageNavigated(page) {
-  if (page === 'optimize') loadTweaks();
+  if (page === 'widgets') refreshWidgetsGalleryUI();
+  else if (page === 'optimize') loadTweaks();
   else if (page === 'startup') loadStartupItems();
   else if (page === 'energy') { if (sensorData) renderEnergyPage(sensorData); }
   else if (page === 'apps') loadApps();
@@ -979,12 +983,90 @@ function onPageNavigated(page) {
   else if (page === 'games') loadFpsTable();
 }
 
+// Widgets Gallery Actions
+window.toggleWidgetAction = async (type) => {
+  try {
+    const status = await api.getWidgetsStatus();
+    const isActive = status && status.active && status.active[type];
+    if (isActive) {
+      await api.closeWidget(type);
+    } else {
+      await api.openWidget(type);
+    }
+    await refreshWidgetsGalleryUI();
+  } catch (err) {
+    console.error('Toggle widget error:', err);
+  }
+};
+
+async function refreshWidgetsGalleryUI() {
+  try {
+    const status = await api.getWidgetsStatus();
+    if (!status) return;
+
+    const modeBadge = document.getElementById('widgetsGlobalModeBadge');
+    if (modeBadge) {
+      if (status.isFloating) {
+        modeBadge.className = 'badge-status-warning';
+        modeBadge.innerText = 'MODO: FLUTUANTE NO TOPO (Shift+\\ para fixar na Mesa)';
+      } else {
+        modeBadge.className = 'badge-status-good';
+        modeBadge.innerText = 'MODO: FIXADO NA MESA (Shift+\\ para flutuar)';
+      }
+    }
+
+    const map = {
+      overview: 'Overview',
+      bar: 'Bar',
+      battery: 'Battery',
+      memory: 'Memory'
+    };
+
+    for (const [key, cap] of Object.entries(map)) {
+      const isAct = status.active && status.active[key];
+      const ind = document.getElementById(`indicator${cap}`);
+      const btn = document.getElementById(`btnToggleWidget${cap}`);
+      if (ind) {
+        ind.innerHTML = isAct
+          ? `<span class="state-dot-active"></span><span class="state-text" style="color:var(--accent-green);">Ativo na Mesa</span>`
+          : `<span class="state-dot-inactive"></span><span class="state-text">Inativo</span>`;
+      }
+      if (btn) {
+        btn.innerText = isAct ? 'Remover da Mesa' : 'Adicionar à Mesa';
+        btn.className = isAct ? 'btn-action-sm btn-danger' : 'btn-action-sm';
+      }
+    }
+  } catch (err) {
+    console.error('Error refreshing widgets gallery:', err);
+  }
+}
+
+if (window.vsTollsAPI && window.vsTollsAPI.onWidgetsStatusUpdate) {
+  window.vsTollsAPI.onWidgetsStatusUpdate(() => refreshWidgetsGalleryUI());
+}
+
+const btnShortcutTest = document.getElementById('btnShortcutTest');
+if (btnShortcutTest) {
+  btnShortcutTest.addEventListener('click', async () => {
+    await api.toggleWidgetFloating();
+    await refreshWidgetsGalleryUI();
+  });
+}
+
 // Init
 loadSystemData();
 
 const btnOpenWidget = document.getElementById('btnOpenWidget');
 if (btnOpenWidget) {
-  btnOpenWidget.addEventListener('click', () => window.openDesktopWidget());
+  btnOpenWidget.addEventListener('click', () => {
+    // Navigate directly to the Central de Widgets
+    const navWidgetsBtn = document.querySelector('.nav-subitem[data-page="widgets"]');
+    if (navWidgetsBtn) {
+      navWidgetsBtn.click();
+    } else {
+      window.openDesktopWidget('overview');
+    }
+  });
 }
 
 // Background Power-Saving Throttling:

@@ -13,15 +13,21 @@
 - **Instalador de Apps via Homebrew Cask**: Instalação pós-formatação de Steam, Chrome, Discord, VLC, VS Code, Keka, Spotify e Blender.
 - **VS MAKER no macOS**: Detecção de microcontroladores em portas `/dev/cu.*` (Arduino, ESP32, CH340, CP2102, FTDI) e liberador de portas seriais presas.
 - **Novo Logo Vetorial Minimalista**: Identidade visual com o monograma vetorial VS em formato SVG perfeitamente integrado ao design, sem uso de packs de emojis genéricos.
-- **Widget de Mesa Flutuante / Fixado na Mesa**: Mini-painel frameless no estilo Apple (330x220px) com glassmorphism, exibindo telemetria ao vivo de CPU, RAM real, Bateria, SSD Apple e Pressão de Memória. Permite fixar na mesa ou manter flutuante, arrastar para qualquer posição e abrir o painel principal com 1 clique.
-- **Inicialização Automática com o macOS**: Integração nativa com `~/Library/LaunchAgents` permitindo iniciar o VS Tolls no login do Mac, com opção exclusiva de abrir apenas o Mini-Widget silencioso.
-- **Otimização Extrema de CPU e RAM para Ficar Sempre Aberto**:
-  - Caching inteligente em memória de comandos pesados do sistema (`system_profiler`, `diskutil`, `ioreg`, `pmset`, `vm_stat`, `sysctl`). Tempo de resposta caiu de centenas de milissegundos para **0.02ms**.
-  - Redução dinâmica de taxa de atualização (throttling): reduz polling para 6 segundos quando o aplicativo ou widget estiver minimizado ou em segundo plano, caindo para **0.0% de uso de CPU**.
+- **Central de Widgets de Mesa & Galeria no Aplicativo**:
+  - Nova aba dedicada no menu lateral (**Widgets de Mesa**) com galeria interativa para visualizar e adicionar múltiplos widgets:
+    1. **Visão Geral 4-em-1 (Clássico)**: CPU, RAM Real vs Cache, Bateria com Watts e SSD Apple NVMe (330×220px).
+    2. **Mini Barra de Status (Ultra Compacta)**: Barra horizontal fina de apenas 52px de altura para cantos de tela (340×52px).
+    3. **MacBook Bateria & MagSafe**: Saúde percentual, potência do carregador em Watts, ciclos e autonomia (210×195px).
+    4. **Memória RAM & Limpeza Rápida**: Detalhamento de RAM com botão interativo de **Purge** direto da mesa (230×195px).
+- **Fixação na Mesa por Padrão + Atalho Global `Shift + \`**:
+  - Por padrão, os widgets ficam **fixados na Mesa (wallpaper)**, atrás de todas as janelas abertas.
+  - Ao pressionar **`Shift + \`** (ou `Cmd+Shift+\`), todos os widgets vêm instantaneamente para a frente no **Modo Flutuante** sobre todas as janelas para uma conferência rápida. Pressionando novamente, voltam a se fixar na Mesa.
+- **Auto-recuperação do Ambiente Electron**:
+  - O script `./run-mac.sh` agora possui auto-recuperação de cache e dependências do Electron caso o ambiente seja alterado.
 - **Build de Produção Nativo (`.app` e `.dmg`)**:
   - Configurado empacotamento profissional com `electron-builder`.
   - Ícone nativo do macOS em alta resolução (`app.icns` gerado com squircle Apple a 1024x1024).
-  - Gera o executável nativo **`VS Tolls.app`** para a pasta `/Applications` e o instalador arrastável **`VS Tolls-1.0.0-arm64.dmg`** para distribuição.
-  - Scripts disponíveis: `npm run build:mac` (compila App + DMG Apple Silicon), `npm run build:mac:dir` (apenas pasta .app) e `npm run build:mac:all` (Universal Apple Silicon + Intel).
+  - Gera o executável nativo **`VS Tolls.app`** instalado em `/Applications` e o instalador arrastável **`VS Tolls-1.0.0-arm64.dmg`**.
+  - Scripts disponíveis: `npm run build:mac`, `npm run build:mac:dir` e `npm run build:mac:all`.
 
 

@@ -105,6 +105,7 @@
             <span class="group-arrow">▾</span>
           </div>
           <div class="nav-group-items" id="grp-tools">
+            <button class="nav-subitem" data-page="widgets">Widgets de Mesa</button>
             <button class="nav-subitem" data-page="optimize">Otimização (VS OTIMIZA)</button>
             <button class="nav-subitem" data-page="startup">Inicialização</button>
             <button class="nav-subitem" data-page="apps">Instalar Apps</button>
@@ -721,6 +722,180 @@
                 <!-- Dynamically populated backups -->
               </div>
             </div>
+          </div>
+        <!-- CENTRAL DE WIDGETS DE MESA -->
+        <section id="page-widgets" class="view-page">
+          <div class="page-title-row">
+            <div>
+              <h2>Central de Widgets de Mesa</h2>
+              <div style="font-size:12px; color:var(--text-muted); margin-top:3px;">
+                Widgets translúcidos estilo Apple para fixar no wallpaper ou flutuar no topo
+              </div>
+            </div>
+            <div style="display:flex; align-items:center; gap:10px;">
+              <span style="font-size:12px; color:var(--text-muted);">Atalho Rápido:</span>
+              <kbd class="kbd-shortcut">Shift + \</kbd>
+              <button id="btnShortcutTest" class="btn-action-sm">Alternar Flutuante / Mesa</button>
+            </div>
+          </div>
+
+          <!-- Banner Informativo -->
+          <div class="startup-info-banner" style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+            <div>
+              <strong>Como funcionam os Widgets no seu MacBook:</strong><br>
+              Por padrão, os widgets ficam <strong>fixados na Mesa</strong> (junto ao Wallpaper, atrás de todas as janelas), permitindo que você veja a telemetria ao minimizar seus apps ou usar o Mission Control. Pressione <kbd class="kbd-shortcut">Shift + \</kbd> a qualquer momento para trazê-los para o <strong>Modo Flutuante no topo de tudo</strong> para uma olhada rápida, e pressione novamente para fixá-los de volta na Mesa!
+            </div>
+            <div id="widgetsGlobalModeBadge" class="badge-status-good" style="white-space:nowrap;">
+              MODO: FIXADO NA MESA
+            </div>
+          </div>
+
+          <!-- Galeria de Widgets Disponíveis -->
+          <div class="widgets-gallery-grid">
+            
+            <!-- Widget 1: Visão Geral 4-em-1 -->
+            <div class="widget-gallery-card">
+              <div>
+                <div class="widget-preview-mockup">
+                  <div class="widget-header-row">
+                    <span style="font-size:10px; font-weight:700; color:var(--text-main);">VS TOLLS · VISÃO GERAL</span>
+                    <span class="widget-dim-badge">330 × 220 px</span>
+                  </div>
+                  <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
+                    <div style="background:rgba(255,255,255,0.06); padding:4px 6px; border-radius:6px; font-size:10px;">
+                      <span style="color:var(--text-muted); font-size:8px;">CPU</span><br><strong style="color:var(--accent-blue);">12% · 38°C</strong>
+                    </div>
+                    <div style="background:rgba(255,255,255,0.06); padding:4px 6px; border-radius:6px; font-size:10px;">
+                      <span style="color:var(--text-muted); font-size:8px;">RAM REAL</span><br><strong style="color:var(--accent-purple);">7.8 GB</strong>
+                    </div>
+                    <div style="background:rgba(255,255,255,0.06); padding:4px 6px; border-radius:6px; font-size:10px;">
+                      <span style="color:var(--text-muted); font-size:8px;">BATERIA</span><br><strong style="color:var(--accent-green);">100% · 3.5W</strong>
+                    </div>
+                    <div style="background:rgba(255,255,255,0.06); padding:4px 6px; border-radius:6px; font-size:10px;">
+                      <span style="color:var(--text-muted); font-size:8px;">SSD APPLE</span><br><strong style="color:var(--accent-orange);">71 GB Livre</strong>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="widget-card-title">Visão Geral 4-em-1 (Clássico)</div>
+                <div class="widget-card-desc">
+                  O painel completo com 4 blocos vitais de telemetria: núcleos CPU com temperatura, RAM real unificada com distinção de cache, bateria MagSafe com Watts e SSD Apple NVMe, além do indicador dinâmico de Pressão de Memória.
+                </div>
+              </div>
+
+              <div class="widget-card-footer">
+                <div class="widget-state-indicator" id="indicatorOverview">
+                  <span class="state-dot-inactive"></span>
+                  <span class="state-text">Inativo</span>
+                </div>
+                <button class="btn-action-sm" id="btnToggleWidgetOverview" onclick="toggleWidgetAction('overview')">
+                  Adicionar à Mesa
+                </button>
+              </div>
+            </div>
+
+            <!-- Widget 2: Mini Barra de Status -->
+            <div class="widget-gallery-card">
+              <div>
+                <div class="widget-preview-mockup" style="min-height:75px; justify-content:center;">
+                  <div class="widget-header-row" style="margin-bottom:6px;">
+                    <span style="font-size:10px; font-weight:700; color:var(--text-main);">MINI BARRA HORIZONTAL</span>
+                    <span class="widget-dim-badge">340 × 52 px</span>
+                  </div>
+                  <div style="background:rgba(255,255,255,0.08); padding:6px 10px; border-radius:8px; font-size:10.5px; font-family:var(--font-mono); display:flex; justify-content:space-between;">
+                    <span style="color:var(--accent-blue);">CPU 14%</span>
+                    <span style="color:var(--accent-purple);">RAM 8G</span>
+                    <span style="color:var(--accent-green);">BAT 100%</span>
+                    <span style="color:var(--accent-orange);">3.5W</span>
+                  </div>
+                </div>
+
+                <div class="widget-card-title">Mini Barra de Telemetria (Ultra Compacta)</div>
+                <div class="widget-card-desc">
+                  Uma barra em linha horizontal fina de apenas 52px de altura. Perfeita para posicionar logo abaixo da barra de menus ou no canto inferior da tela, sem ocupar espaço visual no wallpaper.
+                </div>
+              </div>
+
+              <div class="widget-card-footer">
+                <div class="widget-state-indicator" id="indicatorBar">
+                  <span class="state-dot-inactive"></span>
+                  <span class="state-text">Inativo</span>
+                </div>
+                <button class="btn-action-sm" id="btnToggleWidgetBar" onclick="toggleWidgetAction('bar')">
+                  Adicionar à Mesa
+                </button>
+              </div>
+            </div>
+
+            <!-- Widget 3: MacBook Bateria & MagSafe -->
+            <div class="widget-gallery-card">
+              <div>
+                <div class="widget-preview-mockup">
+                  <div class="widget-header-row">
+                    <span style="font-size:10px; font-weight:700; color:var(--text-main);">ENERGIA & MAGSAFE</span>
+                    <span class="widget-dim-badge">210 × 195 px</span>
+                  </div>
+                  <div style="text-align:center; padding:4px 0;">
+                    <span style="font-size:24px; font-weight:800; color:var(--accent-green); font-family:var(--font-mono);">100%</span>
+                    <div style="font-size:9.5px; color:var(--accent-green); font-weight:600;">Carregando (MagSafe)</div>
+                    <div style="font-size:9px; color:var(--text-muted); margin-top:2px;">Saúde 86% · 329 Ciclos · 35.0 W</div>
+                  </div>
+                </div>
+
+                <div class="widget-card-title">MacBook Bateria & MagSafe</div>
+                <div class="widget-card-desc">
+                  Widget focado no estado de energia do seu MacBook. Monitore potência instantânea em Watts, ciclos de carga, saúde máxima de fábrica e autonomia restante.
+                </div>
+              </div>
+
+              <div class="widget-card-footer">
+                <div class="widget-state-indicator" id="indicatorBattery">
+                  <span class="state-dot-inactive"></span>
+                  <span class="state-text">Inativo</span>
+                </div>
+                <button class="btn-action-sm" id="btnToggleWidgetBattery" onclick="toggleWidgetAction('battery')">
+                  Adicionar à Mesa
+                </button>
+              </div>
+            </div>
+
+            <!-- Widget 4: Memória RAM & Purge Rápido -->
+            <div class="widget-gallery-card">
+              <div>
+                <div class="widget-preview-mockup">
+                  <div class="widget-header-row">
+                    <span style="font-size:10px; font-weight:700; color:var(--text-main);">MEMÓRIA RAM UNIFICADA</span>
+                    <span class="widget-dim-badge">230 × 195 px</span>
+                  </div>
+                  <div>
+                    <div style="display:flex; justify-content:space-between; align-items:baseline;">
+                      <span style="font-size:20px; font-weight:800; color:var(--accent-purple); font-family:var(--font-mono);">8.2 GB</span>
+                      <span style="font-size:9.5px; color:var(--text-muted);">de 16 GB</span>
+                    </div>
+                    <div style="font-size:9px; color:var(--text-muted); margin-top:4px;">Cache: 5.2 GB liberável · Pressão Normal</div>
+                    <div style="margin-top:6px; background:rgba(192,132,252,0.15); border:1px solid rgba(192,132,252,0.3); border-radius:6px; padding:3px; text-align:center; font-size:9.5px; color:var(--accent-purple); font-weight:600;">
+                      Botão de Purge Direto na Mesa
+                    </div>
+                  </div>
+                </div>
+
+                <div class="widget-card-title">Memória RAM & Limpeza Rápida</div>
+                <div class="widget-card-desc">
+                  Exibe o consumo real de RAM e cache de arquivos com botão integrado no próprio widget para liberar memória inativa com 1 clique direto da Área de Trabalho.
+                </div>
+              </div>
+
+              <div class="widget-card-footer">
+                <div class="widget-state-indicator" id="indicatorMemory">
+                  <span class="state-dot-inactive"></span>
+                  <span class="state-text">Inativo</span>
+                </div>
+                <button class="btn-action-sm" id="btnToggleWidgetMemory" onclick="toggleWidgetAction('memory')">
+                  Adicionar à Mesa
+                </button>
+              </div>
+            </div>
+
           </div>
         </section>
 

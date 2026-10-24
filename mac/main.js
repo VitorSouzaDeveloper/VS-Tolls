@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, globalShortcut } = require('electron');
 const path = require('path');
 const { createServer } = require('./server');
 
@@ -17,7 +17,8 @@ const { exportReportToFile } = require('./services/reportBuilder');
 const { getAutoStartStatus, setAutoStart } = require('./services/autostart');
 
 let mainWindow = null;
-let widgetWindow = null;
+const activeWidgets = {};
+let isWidgetsFloating = false; // Default: Pinned to Desktop (Wallpaper level)
 let localServer = null;
 
 function createMainWindow() {
@@ -56,23 +57,42 @@ function createMainWindow() {
   return mainWindow;
 }
 
-function createWidgetWindow(pinToDesktop = false) {
-  if (widgetWindow) {
-    widgetWindow.show();
-    widgetWindow.focus();
-    return widgetWindow;
+function createWidgetWindow(type = 'overview', pinToDesktop = true) {
+  if (activeWidgets[type] && !activeWidgets[type].isDestroyed()) {
+    activeWidgets[type].show();
+    activeWidgets[type].focus();
+    return activeWidgets[type];
   }
 
   const { screen } = require('electron');
   const primaryDisplay = screen.getPrimaryDisplay();
-  const { width: screenWidth } = primaryDisplay.workAreaSize;
+  const { width: screenWidth, height: screenHeight } = primaryDisplay.workAreaSize;
 
-  const widgetWidth = 330;
-  const widgetHeight = 220;
-  const x = Math.max(20, screenWidth - widgetWidth - 24);
-  const y = 48;
+  let widgetWidth = 330;
+  let widgetHeight = 220;
+  let x = Math.max(20, screenWidth - widgetWidth - 24);
+  let y = 48;
 
-  widgetWindow = new BrowserWindow({
+  if (type === 'bar') {
+    widgetWidth = 340;
+    widgetHeight = 52;
+    x = Math.max(20, screenWidth - widgetWidth - 24);
+    y = 48;
+  } else if (type === 'battery') {
+    widgetWidth = 210;
+    widgetHeight = 195;
+    x = Math.max(20, screenWidth - widgetWidth - 24);
+    y = activeWidgets['overview'] ? 280 : 48;
+  } else if (type === 'memory') {
+    widgetWidth = 230;
+    widgetHeight = 195;
+    x = Math.max(20, screenWidth - widgetWidth - 24);
+    y = activeWidgets['overview'] ? 280 : 48;
+  }
+
+  const shouldBeOnTop = !pinToDesktop || isWidgetsFloating;
+
+  const win = new BrowserWindow({
     width: widgetWidth,
     height: widgetHeight,
     x,
@@ -81,7 +101,7 @@ function createWidgetWindow(pinToDesktop = false) {
     transparent: true,
     resizable: false,
     hasShadow: true,
-    alwaysOnTop: !pinToDesktop,
+    alwaysOnTop: shouldBeOnTop,
     skipTaskbar: true,
     backgroundColor: '#00000000',
     webPreferences: {
@@ -91,14 +111,67 @@ function createWidgetWindow(pinToDesktop = false) {
     }
   });
 
-  widgetWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: false });
-  widgetWindow.loadFile(path.join(__dirname, 'public', 'widget.html'));
+  win.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: false });
+  win.loadFile(path.join(__dirname, 'public', 'widget.html'), { query: { type } });
 
-  widgetWindow.on('closed', () => {
-    widgetWindow = null;
+  win.on('closed', () => {
+    delete activeWidgets[type];
+    notifyWidgetStateChange();
   });
 
-  return widgetWindow;
+  activeWidgets[type] = win;
+  notifyWidgetStateChange();
+  return win;
+}
+
+function closeWidgetWindow(type = 'overview') {
+  if (activeWidgets[type] && !activeWidgets[type].isDestroyed()) {
+    activeWidgets[type].close();
+    delete activeWidgets[type];
+    notifyWidgetStateChange();
+    return { success: true, type };
+  }
+  return { success: false, type };
+}
+
+function toggleWidgetsFloating(forceState = null) {
+  isWidgetsFloating = forceState !== null ? forceState : !isWidgetsFloating;
+  for (const [type, win] of Object.entries(activeWidgets)) {
+    if (win && !win.isDestroyed()) {
+      if (isWidgetsFloating) {
+        win.setAlwaysOnTop(true, 'floating', 1);
+        win.moveTop();
+      } else {
+        win.setAlwaysOnTop(false);
+      }
+      try {
+        win.webContents.send('widget-floating-change', { isFloating: isWidgetsFloating, type });
+      } catch (e) {}
+    }
+  }
+  notifyWidgetStateChange();
+  return isWidgetsFloating;
+}
+
+function notifyWidgetStateChange() {
+  const status = getWidgetsStatus();
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    try {
+      mainWindow.webContents.send('widgets-status-update', status);
+    } catch (e) {}
+  }
+}
+
+function getWidgetsStatus() {
+  return {
+    isFloating: isWidgetsFloating,
+    active: {
+      overview: !!(activeWidgets['overview'] && !activeWidgets['overview'].isDestroyed()),
+      bar: !!(activeWidgets['bar'] && !activeWidgets['bar'].isDestroyed()),
+      battery: !!(activeWidgets['battery'] && !activeWidgets['battery'].isDestroyed()),
+      memory: !!(activeWidgets['memory'] && !activeWidgets['memory'].isDestroyed())
+    }
+  };
 }
 
 // Register IPC handlers
@@ -130,20 +203,25 @@ ipcMain.handle('get-serial-ports', () => scanSerialPorts());
 ipcMain.handle('release-serial-port', (e, p) => releaseLockedPort(p));
 ipcMain.handle('export-report', (e, format) => exportReportToFile(format));
 
-// Widget & AutoStart IPCs
-ipcMain.handle('open-widget', () => {
-  createWidgetWindow();
-  return { success: true };
+// Multi-Widget & Floating IPCs
+ipcMain.handle('open-widget', (e, type) => {
+  createWidgetWindow(type || 'overview', !isWidgetsFloating);
+  return { success: true, type: type || 'overview' };
 });
-ipcMain.handle('close-widget', () => {
-  if (widgetWindow) widgetWindow.close();
-  return { success: true };
+ipcMain.handle('close-widget', (e, type) => {
+  return closeWidgetWindow(type || 'overview');
 });
-ipcMain.handle('toggle-widget-pin', (e, pinned) => {
-  if (!widgetWindow) return { success: false };
-  widgetWindow.setAlwaysOnTop(!pinned);
-  return { success: true, pinned };
+ipcMain.handle('toggle-widget-floating', () => {
+  const floating = toggleWidgetsFloating();
+  return { success: true, isFloating: floating };
 });
+ipcMain.handle('toggle-widget-pin', (e, pinned, type = 'overview') => {
+  const win = activeWidgets[type];
+  if (!win || win.isDestroyed()) return { success: false };
+  win.setAlwaysOnTop(!pinned);
+  return { success: true, pinned, type };
+});
+ipcMain.handle('get-widgets-status', () => getWidgetsStatus());
 ipcMain.handle('open-main', () => {
   createMainWindow();
   return { success: true };
@@ -165,9 +243,29 @@ app.whenReady().then(() => {
     console.log('[VS Tolls] Servidor local não iniciado. Operando em modo nativo via IPC.');
   }
 
+  // Register Global Shortcut: Shift+\ (and Shift+Backslash) to toggle Floating on top vs Desktop
+  const onShortcutTriggered = () => {
+    const hasAnyWidget = Object.values(activeWidgets).some(w => w && !w.isDestroyed());
+    if (!hasAnyWidget) {
+      // If none is open, open overview widget in floating mode
+      isWidgetsFloating = true;
+      createWidgetWindow('overview', false);
+    } else {
+      toggleWidgetsFloating();
+    }
+  };
+
+  try {
+    globalShortcut.register('Shift+\\', onShortcutTriggered);
+    globalShortcut.register('Shift+Backslash', onShortcutTriggered);
+    globalShortcut.register('CommandOrControl+Shift+\\', onShortcutTriggered);
+  } catch (err) {
+    console.warn('Global shortcut registration note:', err.message);
+  }
+
   const isWidgetOnly = process.argv.includes('--widget-only');
   if (isWidgetOnly) {
-    createWidgetWindow(true);
+    createWidgetWindow('overview', true);
   } else {
     createMainWindow();
   }
@@ -175,6 +273,10 @@ app.whenReady().then(() => {
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createMainWindow();
   });
+});
+
+app.on('will-quit', () => {
+  globalShortcut.unregisterAll();
 });
 
 app.on('window-all-closed', () => {

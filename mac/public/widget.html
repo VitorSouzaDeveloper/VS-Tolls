@@ -19,7 +19,7 @@
     }
 
     [data-theme="light"] {
-      --bg-glass: rgba(255, 255, 255, 0.82);
+      --bg-glass: rgba(255, 255, 255, 0.84);
       --bg-card: rgba(0, 0, 0, 0.04);
       --border-glass: rgba(0, 0, 0, 0.12);
       --text-main: #0f172a;
@@ -48,7 +48,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 6px;
+      padding: 4px;
     }
 
     .widget-container {
@@ -58,14 +58,19 @@
       backdrop-filter: blur(28px) saturate(190%);
       -webkit-backdrop-filter: blur(28px) saturate(190%);
       border: 1px solid var(--border-glass);
-      border-radius: 20px;
-      padding: 12px 14px;
+      border-radius: 18px;
+      padding: 10px 12px;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28), 0 2px 6px rgba(0, 0, 0, 0.16);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.32), 0 2px 6px rgba(0, 0, 0, 0.16);
       transition: all 0.25s ease;
       cursor: default;
+    }
+
+    .widget-container.is-floating {
+      border-color: rgba(56, 189, 248, 0.45);
+      box-shadow: 0 14px 40px rgba(56, 189, 248, 0.22), 0 4px 10px rgba(0, 0, 0, 0.3);
     }
 
     /* Draggable title area */
@@ -85,148 +90,145 @@
     }
 
     .widget-logo-svg {
-      width: 15px;
-      height: 15px;
+      width: 14px;
+      height: 14px;
       fill: currentColor;
     }
 
     .widget-title {
-      font-size: 11.5px;
+      font-size: 11px;
       font-weight: 700;
       letter-spacing: 0.4px;
       text-transform: uppercase;
     }
 
     .widget-soc-pill {
-      font-size: 10px;
-      color: var(--text-muted);
-      font-weight: 500;
-      margin-left: 2px;
+      font-size: 9.5px;
+      font-weight: 600;
+      padding: 1px 6px;
+      border-radius: 6px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-glass);
+      color: var(--accent-blue);
     }
 
     .widget-actions {
       display: flex;
       align-items: center;
-      gap: 5px;
+      gap: 4px;
       -webkit-app-region: no-drag;
-      opacity: 0.35;
-      transition: opacity 0.2s;
-    }
-
-    .widget-container:hover .widget-actions {
-      opacity: 1;
     }
 
     .action-btn {
       background: transparent;
-      border: none;
+      border: 1px solid transparent;
       color: var(--text-muted);
       cursor: pointer;
-      width: 18px;
-      height: 18px;
-      border-radius: 4px;
+      width: 22px;
+      height: 22px;
+      border-radius: 6px;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 11px;
-      transition: all 0.15s;
+      transition: all 0.15s ease;
     }
 
     .action-btn:hover {
       background: var(--bg-card);
       color: var(--text-main);
+      border-color: var(--border-glass);
     }
 
-    /* 4 Live Metrics Grid (2x2) */
+    .action-btn.active-float {
+      color: var(--accent-blue);
+      border-color: rgba(56, 189, 248, 0.4);
+      background: rgba(56, 189, 248, 0.12);
+    }
+
+    /* --- MODE: OVERVIEW 4-IN-1 --- */
     .metrics-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 7px;
+      grid-gap: 6px;
       flex: 1;
-      margin-top: 4px;
-      -webkit-app-region: no-drag;
+      margin-bottom: 6px;
     }
 
     .metric-cell {
       background: var(--bg-card);
       border: 1px solid var(--border-glass);
-      border-radius: 10px;
-      padding: 7px 9px;
+      border-radius: 12px;
+      padding: 6px 9px;
       display: flex;
       flex-direction: column;
-      justify-content: center;
-      transition: transform 0.15s;
+      justify-content: space-between;
     }
 
     .metric-top {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 2px;
     }
 
     .metric-lbl {
-      font-size: 9.5px;
+      font-size: 9px;
       font-weight: 600;
       text-transform: uppercase;
-      letter-spacing: 0.3px;
+      letter-spacing: 0.5px;
       color: var(--text-muted);
     }
 
     .metric-val {
+      font-size: 15px;
+      font-weight: 700;
       font-family: var(--font-mono);
-      font-size: 16px;
-      font-weight: 800;
-      letter-spacing: -0.5px;
-      line-height: 1.1;
+      letter-spacing: -0.3px;
+      margin: 2px 0;
     }
 
-    .metric-sub {
-      font-size: 9.5px;
-      color: var(--text-muted);
-      margin-top: 2px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      font-family: var(--font-mono);
-    }
-
-    /* Mini Progress bar inside cell */
     .metric-bar-wrap {
       width: 100%;
-      height: 3px;
+      height: 3.5px;
       background: rgba(255, 255, 255, 0.08);
-      border-radius: 2px;
+      border-radius: 99px;
       overflow: hidden;
-      margin-top: 4px;
+      margin-top: 3px;
     }
 
     .metric-bar-fill {
       height: 100%;
-      border-radius: 2px;
-      transition: width 0.4s ease;
+      border-radius: 99px;
+      transition: width 0.35s ease;
     }
 
-    /* Specific accents */
+    .metric-sub {
+      font-size: 8.5px;
+      color: var(--text-muted);
+      margin-top: 3px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
     .col-cpu { color: var(--accent-blue); }
-    .col-mem { color: var(--accent-orange); }
+    .col-mem { color: var(--accent-purple); }
     .col-batt { color: var(--accent-green); }
-    .col-ssd { color: var(--accent-purple); }
+    .col-ssd { color: var(--accent-orange); }
 
     .bg-cpu { background: var(--accent-blue); }
-    .bg-mem { background: var(--accent-orange); }
+    .bg-mem { background: var(--accent-purple); }
     .bg-batt { background: var(--accent-green); }
-    .bg-ssd { background: var(--accent-purple); }
+    .bg-ssd { background: var(--accent-orange); }
 
-    /* Footer status line */
     .widget-footer {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding-top: 6px;
-      border-top: 1px solid rgba(255, 255, 255, 0.06);
       font-size: 9.5px;
       color: var(--text-muted);
+      padding-top: 4px;
+      border-top: 1px solid var(--border-glass);
       -webkit-app-region: drag;
     }
 
@@ -244,23 +246,167 @@
       background: var(--accent-green);
       border-radius: 50%;
     }
+
+    /* --- MODE: MINI BAR --- */
+    .bar-container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      height: 100%;
+      gap: 10px;
+      -webkit-app-region: drag;
+      cursor: grab;
+    }
+
+    .bar-stats {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 11px;
+      font-family: var(--font-mono);
+      font-weight: 600;
+    }
+
+    .bar-item {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .bar-lbl {
+      font-size: 9px;
+      color: var(--text-muted);
+      font-family: var(--font-sans);
+      font-weight: 700;
+    }
+
+    /* --- MODE: BATTERY CARD --- */
+    .batt-card-body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+      text-align: center;
+      gap: 4px;
+    }
+
+    .batt-big-val {
+      font-size: 32px;
+      font-weight: 800;
+      font-family: var(--font-mono);
+      color: var(--accent-green);
+      letter-spacing: -1px;
+      line-height: 1;
+    }
+
+    .batt-state-tag {
+      font-size: 9.5px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 99px;
+      background: rgba(16, 185, 129, 0.14);
+      color: var(--accent-green);
+    }
+
+    .batt-details-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      width: 100%;
+      gap: 6px;
+      margin-top: 6px;
+      text-align: left;
+    }
+
+    .batt-mini-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border-glass);
+      border-radius: 8px;
+      padding: 4px 6px;
+    }
+
+    .batt-mini-lbl {
+      font-size: 8px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    .batt-mini-val {
+      font-size: 11px;
+      font-weight: 700;
+      font-family: var(--font-mono);
+    }
+
+    /* --- MODE: MEMORY CARD --- */
+    .mem-card-body {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      flex: 1;
+      gap: 6px;
+    }
+
+    .mem-top-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+    }
+
+    .mem-big-val {
+      font-size: 24px;
+      font-weight: 800;
+      font-family: var(--font-mono);
+      color: var(--accent-purple);
+      letter-spacing: -0.5px;
+    }
+
+    .mem-total-sub {
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
+    .btn-purge {
+      background: var(--bg-card);
+      border: 1px solid var(--border-glass);
+      color: var(--text-main);
+      padding: 5px 8px;
+      border-radius: 8px;
+      font-size: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      transition: all 0.15s ease;
+      -webkit-app-region: no-drag;
+    }
+
+    .btn-purge:hover {
+      background: rgba(192, 132, 252, 0.18);
+      border-color: rgba(192, 132, 252, 0.4);
+      color: var(--accent-purple);
+    }
   </style>
 </head>
 <body>
   <div class="widget-container" id="widgetRoot">
-    <!-- Header -->
-    <div class="widget-header">
+    <!-- Header (shared across overview, battery, memory) -->
+    <div class="widget-header" id="widgetHeader">
       <div class="widget-brand">
         <svg class="widget-logo-svg" viewBox="0 0 200 200">
           <path d="M 30,35 L 85,35 L 140,165 L 85,165 Z" />
           <path d="M 80,45 C 95,20 145,20 160,50 C 170,70 145,95 105,108 C 65,120 40,140 50,165 C 65,195 125,195 145,165" fill="none" stroke="currentColor" stroke-width="26" stroke-linecap="round" />
         </svg>
-        <span class="widget-title">VS TOLLS</span>
+        <span class="widget-title" id="wTitleLabel">VS TOLLS</span>
         <span class="widget-soc-pill" id="wSoCLabel">M1 Pro</span>
       </div>
 
       <div class="widget-actions">
-        <button class="action-btn" id="btnTogglePin" title="Alternar entre Fixar na Mesa / Flutuante">
+        <button class="action-btn" id="btnTogglePin" title="Alternar Modo: Fixar na Mesa / Flutuante (Atalho: Shift+\)">
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="4"/><path d="M12 11v11"/></svg>
         </button>
         <button class="action-btn" id="btnOpenMain" title="Abrir Painel Completo">
@@ -272,205 +418,395 @@
       </div>
     </div>
 
-    <!-- 4 Live Metrics Grid -->
-    <div class="metrics-grid">
-      <!-- CPU -->
-      <div class="metric-cell">
-        <div class="metric-top">
-          <span class="metric-lbl">CPU Total</span>
-          <span class="col-cpu" style="font-size:10px;" id="wCpuTemp">--°C</span>
+    <!-- VIEW 1: OVERVIEW 4-EM-1 -->
+    <div id="viewOverview" style="display:none; flex-direction:column; flex:1;">
+      <div class="metrics-grid">
+        <div class="metric-cell">
+          <div class="metric-top">
+            <span class="metric-lbl">CPU Total</span>
+            <span class="col-cpu" style="font-size:10px;" id="wCpuTemp">--°C</span>
+          </div>
+          <div class="metric-val col-cpu" id="wCpuVal">0%</div>
+          <div class="metric-bar-wrap">
+            <div class="metric-bar-fill bg-cpu" id="wCpuBar" style="width: 0%"></div>
+          </div>
+          <div class="metric-sub" id="wCpuSub">Cores Ativos</div>
         </div>
-        <div class="metric-val col-cpu" id="wCpuVal">0%</div>
-        <div class="metric-bar-wrap">
-          <div class="metric-bar-fill bg-cpu" id="wCpuBar" style="width: 0%"></div>
+
+        <div class="metric-cell">
+          <div class="metric-top">
+            <span class="metric-lbl">RAM Real</span>
+            <span class="col-mem" style="font-size:10px;" id="wMemPercent">0%</span>
+          </div>
+          <div class="metric-val col-mem" id="wMemVal">0 GB</div>
+          <div class="metric-bar-wrap">
+            <div class="metric-bar-fill bg-mem" id="wMemBar" style="width: 0%"></div>
+          </div>
+          <div class="metric-sub" id="wMemSub">16 GB Unificada</div>
         </div>
-        <div class="metric-sub" id="wCpuSub">6P + 2E Cores</div>
+
+        <div class="metric-cell">
+          <div class="metric-top">
+            <span class="metric-lbl">Bateria</span>
+            <span class="col-batt" style="font-size:10px;" id="wBattWatts">-- W</span>
+          </div>
+          <div class="metric-val col-batt" id="wBattVal">100%</div>
+          <div class="metric-bar-wrap">
+            <div class="metric-bar-fill bg-batt" id="wBattBar" style="width: 100%"></div>
+          </div>
+          <div class="metric-sub" id="wBattSub">Descarregando</div>
+        </div>
+
+        <div class="metric-cell">
+          <div class="metric-top">
+            <span class="metric-lbl">SSD Apple</span>
+            <span class="col-ssd" style="font-size:10px;" id="wDiskPercent">--%</span>
+          </div>
+          <div class="metric-val col-ssd" id="wDiskFree">-- GB</div>
+          <div class="metric-bar-wrap">
+            <div class="metric-bar-fill bg-ssd" id="wDiskBar" style="width: 0%"></div>
+          </div>
+          <div class="metric-sub" id="wDiskSub">NVMe Fabric</div>
+        </div>
       </div>
 
-      <!-- Memória -->
-      <div class="metric-cell">
-        <div class="metric-top">
-          <span class="metric-lbl">RAM Real</span>
-          <span class="col-mem" style="font-size:10px;" id="wMemPercent">0%</span>
+      <div class="widget-footer">
+        <div class="pressure-tag">
+          <span class="dot-pulse" id="wPressureDot"></span>
+          <span id="wPressureText">Pressão: Normal</span>
         </div>
-        <div class="metric-val col-mem" id="wMemVal">0 GB</div>
-        <div class="metric-bar-wrap">
-          <div class="metric-bar-fill bg-mem" id="wMemBar" style="width: 0%"></div>
-        </div>
-        <div class="metric-sub" id="wMemSub">16 GB Unificada</div>
-      </div>
-
-      <!-- Bateria -->
-      <div class="metric-cell">
-        <div class="metric-top">
-          <span class="metric-lbl">Bateria</span>
-          <span class="col-batt" style="font-size:10px;" id="wBattWatts">-- W</span>
-        </div>
-        <div class="metric-val col-batt" id="wBattVal">100%</div>
-        <div class="metric-bar-wrap">
-          <div class="metric-bar-fill bg-batt" id="wBattBar" style="width: 100%"></div>
-        </div>
-        <div class="metric-sub" id="wBattSub">Descarregando</div>
-      </div>
-
-      <!-- Disco NVMe -->
-      <div class="metric-cell">
-        <div class="metric-top">
-          <span class="metric-lbl">SSD Apple</span>
-          <span class="col-ssd" style="font-size:10px;" id="wDiskPercent">--%</span>
-        </div>
-        <div class="metric-val col-ssd" id="wDiskFree">-- GB</div>
-        <div class="metric-bar-wrap">
-          <div class="metric-bar-fill bg-ssd" id="wDiskBar" style="width: 0%"></div>
-        </div>
-        <div class="metric-sub" id="wDiskSub">NVMe Fabric</div>
+        <div id="wSocWatts" style="font-family:var(--font-mono);">SoC: -- W</div>
       </div>
     </div>
 
-    <!-- Footer -->
-    <div class="widget-footer">
-      <div class="pressure-tag">
-        <span class="dot-pulse" id="wPressureDot"></span>
-        <span id="wPressureText">Pressão: Normal</span>
+    <!-- VIEW 2: MINI BAR -->
+    <div id="viewBar" style="display:none; width:100%; height:100%;">
+      <div class="bar-container">
+        <div class="widget-brand">
+          <svg class="widget-logo-svg" viewBox="0 0 200 200">
+            <path d="M 30,35 L 85,35 L 140,165 L 85,165 Z" />
+            <path d="M 80,45 C 95,20 145,20 160,50 C 170,70 145,95 105,108 C 65,120 40,140 50,165 C 65,195 125,195 145,165" fill="none" stroke="currentColor" stroke-width="26" stroke-linecap="round" />
+          </svg>
+        </div>
+        <div class="bar-stats">
+          <div class="bar-item col-cpu"><span class="bar-lbl">CPU</span><span id="barCpuVal">0%</span></div>
+          <div class="bar-item col-mem"><span class="bar-lbl">RAM</span><span id="barMemVal">0G</span></div>
+          <div class="bar-item col-batt"><span class="bar-lbl">BAT</span><span id="barBattVal">100%</span></div>
+          <div class="bar-item col-ssd"><span class="bar-lbl">SOC</span><span id="barSocVal">--W</span></div>
+        </div>
+        <div class="widget-actions">
+          <button class="action-btn" id="btnTogglePinBar" title="Shift+\ para Alternar">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="7" r="4"/><path d="M12 11v11"/></svg>
+          </button>
+          <button class="action-btn" id="btnCloseWidgetBar" title="Fechar">✕</button>
+        </div>
       </div>
-      <div id="wSocWatts" style="font-family:var(--font-mono);">SoC: -- W</div>
+    </div>
+
+    <!-- VIEW 3: BATTERY & MAGSAFE -->
+    <div id="viewBattery" style="display:none; flex-direction:column; flex:1;">
+      <div class="batt-card-body">
+        <div class="batt-big-val" id="battCardPct">100%</div>
+        <div class="batt-state-tag" id="battCardState">Carregando (MagSafe)</div>
+        <div style="font-size:10px; color:var(--text-muted); font-family:var(--font-mono);" id="battCardTime">-- restantes</div>
+
+        <div class="batt-details-grid">
+          <div class="batt-mini-box">
+            <div class="batt-mini-lbl">Consumo</div>
+            <div class="batt-mini-val col-batt" id="battCardWatts">-- W</div>
+          </div>
+          <div class="batt-mini-box">
+            <div class="batt-mini-lbl">Saúde</div>
+            <div class="batt-mini-val" id="battCardHealth">86%</div>
+          </div>
+          <div class="batt-mini-box">
+            <div class="batt-mini-lbl">Ciclos</div>
+            <div class="batt-mini-val" id="battCardCycles">329</div>
+          </div>
+          <div class="batt-mini-box">
+            <div class="batt-mini-lbl">Voltagem</div>
+            <div class="batt-mini-val" id="battCardVolt">11.5 V</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIEW 4: MEMORY & PURGE -->
+    <div id="viewMemory" style="display:none; flex-direction:column; flex:1;">
+      <div class="mem-card-body">
+        <div>
+          <div class="mem-top-row">
+            <span class="mem-big-val" id="memCardVal">8.0 GB</span>
+            <span class="mem-total-sub" id="memCardTotal">de 16 GB</span>
+          </div>
+          <div class="metric-bar-wrap" style="height:5px; margin-top:4px;">
+            <div class="metric-bar-fill bg-mem" id="memCardBar" style="width: 50%"></div>
+          </div>
+        </div>
+
+        <div class="batt-details-grid" style="margin-top:2px;">
+          <div class="batt-mini-box">
+            <div class="batt-mini-lbl">Apps + Presa</div>
+            <div class="batt-mini-val col-mem" id="memCardApps">-- GB</div>
+          </div>
+          <div class="batt-mini-box">
+            <div class="batt-mini-lbl">Cache Liberável</div>
+            <div class="batt-mini-val col-ssd" id="memCardCache">-- GB</div>
+          </div>
+        </div>
+
+        <div class="pressure-tag" style="font-size:10px;">
+          <span class="dot-pulse" id="memCardPressDot"></span>
+          <span id="memCardPressText">Pressão: Normal</span>
+        </div>
+
+        <button class="btn-purge" id="btnPurgeRam">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+          Liberar Memória (Purge)
+        </button>
+      </div>
     </div>
   </div>
 
   <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const widgetType = urlParams.get('type') || 'overview';
+
     const api = window.vsTollsAPI || {
       getSensors: () => fetch('/api/sensors').then(r => r.json()),
       getDisks: () => fetch('/api/disks').then(r => r.json()),
       getSystemInfo: () => fetch('/api/system').then(r => r.json()),
-      togglePin: (pinned) => fetch(`/api/widget/pin?pinned=${pinned}`).then(r => r.json()),
+      cleanMemory: () => fetch('/api/optimize/clean').then(r => r.json()),
+      togglePin: (pinned) => fetch(`/api/widget/pin?pinned=${pinned}&type=${widgetType}`).then(r => r.json()),
+      toggleWidgetFloating: () => fetch('/api/widget/floating').then(r => r.json()),
       openMain: () => fetch('/api/widget/openmain').then(r => r.json()),
-      closeWidget: () => fetch('/api/widget/close').then(r => r.json())
+      closeWidget: (t) => fetch(`/api/widget/close?type=${t}`).then(r => r.json())
     };
 
-    let isPinned = false;
+    let isFloating = false; // Default: Pinned on Desktop (Wallpaper)
 
-    // Elements
-    const elCpuVal = document.getElementById('wCpuVal');
-    const elCpuTemp = document.getElementById('wCpuTemp');
-    const elCpuBar = document.getElementById('wCpuBar');
+    // DOM Elements - Setup views based on widgetType
+    const elHeader = document.getElementById('widgetHeader');
+    const elViewOverview = document.getElementById('viewOverview');
+    const elViewBar = document.getElementById('viewBar');
+    const elViewBattery = document.getElementById('viewBattery');
+    const elViewMemory = document.getElementById('viewMemory');
+    const rootEl = document.getElementById('widgetRoot');
+    const btnPin = document.getElementById('btnTogglePin');
 
-    const elMemVal = document.getElementById('wMemVal');
-    const elMemPercent = document.getElementById('wMemPercent');
-    const elMemBar = document.getElementById('wMemBar');
-    const elMemSub = document.getElementById('wMemSub');
+    if (widgetType === 'bar') {
+      if (elHeader) elHeader.style.display = 'none';
+      elViewBar.style.display = 'flex';
+    } else if (widgetType === 'battery') {
+      document.getElementById('wTitleLabel').innerText = 'BATERIA';
+      elViewBattery.style.display = 'flex';
+    } else if (widgetType === 'memory') {
+      document.getElementById('wTitleLabel').innerText = 'MEMÓRIA RAM';
+      elViewMemory.style.display = 'flex';
+    } else {
+      elViewOverview.style.display = 'flex';
+    }
 
-    const elBattVal = document.getElementById('wBattVal');
-    const elBattWatts = document.getElementById('wBattWatts');
-    const elBattBar = document.getElementById('wBattBar');
-    const elBattSub = document.getElementById('wBattSub');
+    function updateFloatingState(floating) {
+      isFloating = floating;
+      if (rootEl) {
+        rootEl.classList.toggle('is-floating', isFloating);
+      }
+      if (btnPin) {
+        btnPin.classList.toggle('active-float', isFloating);
+        btnPin.title = isFloating 
+          ? 'Modo Flutuante ativo (Visível no topo). Atalho: Shift+\\ para fixar na Mesa.'
+          : 'Fixado na Mesa (Atrás das janelas). Atalho: Shift+\\ para flutuar no topo.';
+      }
+    }
 
-    const elDiskPercent = document.getElementById('wDiskPercent');
-    const elDiskFree = document.getElementById('wDiskFree');
-    const elDiskBar = document.getElementById('wDiskBar');
-    const elDiskSub = document.getElementById('wDiskSub');
+    if (window.vsTollsAPI && window.vsTollsAPI.onWidgetFloatingChange) {
+      window.vsTollsAPI.onWidgetFloatingChange((data) => {
+        updateFloatingState(data.isFloating);
+      });
+    }
 
-    const elPressureText = document.getElementById('wPressureText');
-    const elPressureDot = document.getElementById('wPressureDot');
-    const elSocWatts = document.getElementById('wSocWatts');
-
+    // Telemetry updates
     async function updateTelemetry() {
       try {
         const snap = await api.getSensors();
-        if (snap) {
-          // CPU
-          elCpuVal.innerText = `${snap.cpu.usage}%`;
-          elCpuTemp.innerText = `${snap.cpu.temp}°C`;
-          elCpuBar.style.width = `${snap.cpu.usage}%`;
+        if (!snap) return;
 
-          // Memory
-          elMemVal.innerText = `${snap.memory.usedGb} GB`;
-          elMemPercent.innerText = `${snap.memory.percent}%`;
-          elMemBar.style.width = `${snap.memory.percent}%`;
-          elMemSub.innerText = `${snap.memory.cachedFilesGb} GB Cache · ${snap.memory.freeGb}G Livres`;
+        // View 1: Overview
+        if (widgetType === 'overview') {
+          document.getElementById('wCpuVal').innerText = `${snap.cpu.usage}%`;
+          document.getElementById('wCpuTemp').innerText = `${snap.cpu.temp}°C`;
+          document.getElementById('wCpuBar').style.width = `${snap.cpu.usage}%`;
 
-          // Memory Pressure
+          document.getElementById('wMemVal').innerText = `${snap.memory.usedGb} GB`;
+          document.getElementById('wMemPercent').innerText = `${snap.memory.percent}%`;
+          document.getElementById('wMemBar').style.width = `${snap.memory.percent}%`;
+          document.getElementById('wMemSub').innerText = `${snap.memory.cachedFilesGb} GB Cache · ${snap.memory.freeGb}G Livres`;
+
           if (snap.memory.pressureStatus) {
-            elPressureText.innerText = `Pressão: ${snap.memory.pressureStatus.split(' ')[0]}`;
+            const pressDot = document.getElementById('wPressureDot');
+            const pressTxt = document.getElementById('wPressureText');
+            pressTxt.innerText = `Pressão: ${snap.memory.pressureStatus.split(' ')[0]}`;
             if (snap.memory.pressureStatus.includes('Amarelo')) {
-              elPressureDot.style.background = '#f59e0b';
-              elPressureText.style.color = '#f59e0b';
+              pressDot.style.background = '#f59e0b';
+              pressTxt.style.color = '#f59e0b';
             } else if (snap.memory.pressureStatus.includes('Vermelho')) {
-              elPressureDot.style.background = '#ef4444';
-              elPressureText.style.color = '#ef4444';
+              pressDot.style.background = '#ef4444';
+              pressTxt.style.color = '#ef4444';
             } else {
-              elPressureDot.style.background = '#10b981';
-              elPressureText.style.color = '#10b981';
+              pressDot.style.background = '#10b981';
+              pressTxt.style.color = '#10b981';
             }
           }
 
-          // Battery
           if (snap.battery) {
-            elBattVal.innerText = `${snap.battery.percent}%`;
-            elBattWatts.innerText = `${snap.battery.watts} W`;
-            elBattBar.style.width = `${snap.battery.percent}%`;
-            elBattSub.innerText = snap.battery.isCharging ? 'Carregando (MagSafe)' : `${snap.battery.timeLeft} restantes`;
+            document.getElementById('wBattVal').innerText = `${snap.battery.percent}%`;
+            document.getElementById('wBattWatts').innerText = `${snap.battery.watts} W`;
+            document.getElementById('wBattBar').style.width = `${snap.battery.percent}%`;
+            document.getElementById('wBattSub').innerText = snap.battery.isCharging ? 'Carregando (MagSafe)' : `${snap.battery.timeLeft} restantes`;
           }
 
-          // SoC Power
           if (snap.soc) {
-            elSocWatts.innerText = `SoC: ${snap.soc.powerWatts} W`;
+            document.getElementById('wSocWatts').innerText = `SoC: ${snap.soc.powerWatts} W`;
+          }
+        }
+
+        // View 2: Mini Bar
+        if (widgetType === 'bar') {
+          document.getElementById('barCpuVal').innerText = `${snap.cpu.usage}% (${snap.cpu.temp}°C)`;
+          document.getElementById('barMemVal').innerText = `${snap.memory.usedGb}G`;
+          if (snap.battery) {
+            document.getElementById('barBattVal').innerText = `${snap.battery.percent}% (${snap.battery.watts}W)`;
+          }
+          if (snap.soc) {
+            document.getElementById('barSocVal').innerText = `${snap.soc.powerWatts}W`;
+          }
+        }
+
+        // View 3: Battery
+        if (widgetType === 'battery' && snap.battery) {
+          document.getElementById('battCardPct').innerText = `${snap.battery.percent}%`;
+          document.getElementById('battCardState').innerText = snap.battery.isCharging ? 'Carregando (MagSafe)' : snap.battery.state;
+          document.getElementById('battCardTime').innerText = snap.battery.isCharging ? 'Alimentação CA conectada' : `${snap.battery.timeLeft} de autonomia`;
+          document.getElementById('battCardWatts').innerText = `${snap.battery.watts} W`;
+          document.getElementById('battCardHealth').innerText = `${snap.battery.maxCapacityPct}%`;
+          document.getElementById('battCardCycles').innerText = `${snap.battery.cycleCount}`;
+          document.getElementById('battCardVolt').innerText = `${snap.battery.voltageVolts} V`;
+        }
+
+        // View 4: Memory
+        if (widgetType === 'memory' && snap.memory) {
+          document.getElementById('memCardVal').innerText = `${snap.memory.usedGb} GB`;
+          document.getElementById('memCardTotal').innerText = `de ${snap.memory.totalGb} GB (${snap.memory.percent}%)`;
+          document.getElementById('memCardBar').style.width = `${snap.memory.percent}%`;
+          document.getElementById('memCardApps').innerText = `${snap.memory.appMemoryGb} GB`;
+          document.getElementById('memCardCache').innerText = `${snap.memory.cachedFilesGb} GB`;
+
+          const dot = document.getElementById('memCardPressDot');
+          const txt = document.getElementById('memCardPressText');
+          if (dot && txt) {
+            txt.innerText = `Pressão: ${snap.memory.pressureStatus}`;
+            dot.style.background = snap.memory.pressureColor || '#10b981';
+            txt.style.color = snap.memory.pressureColor || '#10b981';
           }
         }
       } catch (err) {
-        console.error('Widget update error:', err);
+        console.error('Widget telemetry error:', err);
       }
     }
 
     async function loadDisks() {
+      if (widgetType !== 'overview') return;
       try {
         const disks = await api.getDisks();
         if (disks && disks[0]) {
           const d = disks[0];
-          elDiskPercent.innerText = `${d.usedPercent}%`;
-          elDiskFree.innerText = `${d.freeGb} GB`;
-          elDiskBar.style.width = `${d.usedPercent}%`;
-          elDiskSub.innerText = `${d.freeGb} GB livres de ${d.totalGb}G`;
+          document.getElementById('wDiskPercent').innerText = `${d.usedPercent}%`;
+          document.getElementById('wDiskFree').innerText = `${d.freeGb} GB`;
+          document.getElementById('wDiskBar').style.width = `${d.usedPercent}%`;
+          document.getElementById('wDiskSub').innerText = `${d.freeGb} GB livres de ${d.totalGb}G`;
         }
       } catch (e) {}
     }
 
-    // Pin toggle
-    document.getElementById('btnTogglePin').addEventListener('click', async () => {
-      isPinned = !isPinned;
-      const btn = document.getElementById('btnTogglePin');
-      btn.style.color = isPinned ? 'var(--accent-blue)' : 'var(--text-muted)';
-      btn.style.borderColor = isPinned ? 'rgba(59, 130, 246, 0.4)' : 'transparent';
-      btn.title = isPinned ? 'Fixado na Mesa (atrás das janelas)' : 'Modo Flutuante (sempre visível)';
-      if (window.vsTollsAPI && window.vsTollsAPI.toggleWidgetPin) {
-        await window.vsTollsAPI.toggleWidgetPin(isPinned);
-      } else {
-        await api.togglePin(isPinned);
-      }
-    });
+    // Purge RAM button in Memory Widget
+    const btnPurge = document.getElementById('btnPurgeRam');
+    if (btnPurge) {
+      btnPurge.addEventListener('click', async () => {
+        btnPurge.innerText = 'Liberando...';
+        btnPurge.disabled = true;
+        try {
+          if (window.vsTollsAPI && window.vsTollsAPI.cleanMemory) {
+            await window.vsTollsAPI.cleanMemory();
+          } else {
+            await api.cleanMemory();
+          }
+          await updateTelemetry();
+          btnPurge.innerText = '✓ Cache Liberado!';
+          setTimeout(() => {
+            btnPurge.innerText = 'Liberar Memória (Purge)';
+            btnPurge.disabled = false;
+          }, 2000);
+        } catch (e) {
+          btnPurge.innerText = 'Liberar Memória (Purge)';
+          btnPurge.disabled = false;
+        }
+      });
+    }
+
+    // Toggle Pin / Floating
+    if (btnPin) {
+      btnPin.addEventListener('click', async () => {
+        if (window.vsTollsAPI && window.vsTollsAPI.toggleWidgetFloating) {
+          const res = await window.vsTollsAPI.toggleWidgetFloating();
+          updateFloatingState(res.isFloating);
+        } else {
+          isFloating = !isFloating;
+          updateFloatingState(isFloating);
+        }
+      });
+    }
+
+    const btnPinBar = document.getElementById('btnTogglePinBar');
+    if (btnPinBar) {
+      btnPinBar.addEventListener('click', async () => {
+        if (window.vsTollsAPI && window.vsTollsAPI.toggleWidgetFloating) {
+          const res = await window.vsTollsAPI.toggleWidgetFloating();
+          updateFloatingState(res.isFloating);
+        }
+      });
+    }
 
     // Open main window
-    document.getElementById('btnOpenMain').addEventListener('click', () => {
-      if (window.vsTollsAPI && window.vsTollsAPI.openMain) {
-        window.vsTollsAPI.openMain();
-      } else {
-        window.open('/', '_blank');
-      }
-    });
+    const btnOpenMain = document.getElementById('btnOpenMain');
+    if (btnOpenMain) {
+      btnOpenMain.addEventListener('click', () => {
+        if (window.vsTollsAPI && window.vsTollsAPI.openMain) {
+          window.vsTollsAPI.openMain();
+        } else {
+          window.open('/', '_blank');
+        }
+      });
+    }
 
     // Close widget
-    document.getElementById('btnCloseWidget').addEventListener('click', () => {
+    const doClose = () => {
       if (window.vsTollsAPI && window.vsTollsAPI.closeWidget) {
-        window.vsTollsAPI.closeWidget();
+        window.vsTollsAPI.closeWidget(widgetType);
       } else {
         window.close();
       }
-    });
+    };
+    const btnClose = document.getElementById('btnCloseWidget');
+    if (btnClose) btnClose.addEventListener('click', doClose);
+    const btnCloseBar = document.getElementById('btnCloseWidgetBar');
+    if (btnCloseBar) btnCloseBar.addEventListener('click', doClose);
 
     // Theme sync
     const currentTheme = localStorage.getItem('vs_tolls_theme') || 'dark';
     document.documentElement.setAttribute('data-theme', currentTheme);
 
-    // Initial
+    // Initial load
     loadDisks();
     updateTelemetry();
 

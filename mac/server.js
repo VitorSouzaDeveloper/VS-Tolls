@@ -86,8 +86,16 @@ function createServer(port = 3000) {
     res.json(setAutoStart(enable === 'true', widgetOnly === 'true'));
   });
 
-  // Desktop Widget
-  app.get('/api/widget/status', (req, res) => res.json({ available: true, path: '/widget.html' }));
+  // Desktop Widgets
+  app.get('/api/widget/status', (req, res) => res.json({
+    available: true,
+    isFloating: false,
+    active: { overview: true, bar: false, battery: false, memory: false },
+    path: '/widget.html'
+  }));
+  app.get('/api/widget/open', (req, res) => res.json({ success: true, type: req.query.type || 'overview' }));
+  app.get('/api/widget/close', (req, res) => res.json({ success: true, type: req.query.type || 'overview' }));
+  app.get('/api/widget/floating', (req, res) => res.json({ success: true, isFloating: true }));
 
   // Apps Installer
   app.get('/api/apps', (req, res) => res.json(getInstalledStatus()));
