@@ -7,8 +7,8 @@
     "start": "electron mac/main.js",
     "web": "node mac/server.js",
     "mac": "./run-mac.sh",
-    "build:mac": "electron-builder --mac --arm64",
-    "build:mac:dir": "electron-builder --mac --arm64 --dir",
+    "build:mac": "electron-builder --mac --arm64 && codesign --force --deep --sign - \"dist/mac-arm64/VS Tolls.app\" && xattr -cr \"dist/mac-arm64/VS Tolls.app\"",
+    "build:mac:dir": "electron-builder --mac --arm64 --dir && codesign --force --deep --sign - \"dist/mac-arm64/VS Tolls.app\" && xattr -cr \"dist/mac-arm64/VS Tolls.app\"",
     "build:mac:all": "electron-builder --mac --arm64 --x64"
   },
   "build": {
