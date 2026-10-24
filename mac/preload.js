@@ -1,0 +1,29 @@
+const { contextBridge, ipcRenderer } = require('electron');
+
+contextBridge.exposeInMainWorld('vsTollsAPI', {
+  getSystemInfo: () => ipcRenderer.invoke('get-system-info'),
+  getSensors: () => ipcRenderer.invoke('get-sensors'),
+  getDisks: () => ipcRenderer.invoke('get-disks'),
+  getNetwork: (full) => ipcRenderer.invoke('get-network', full),
+  getGames: () => ipcRenderer.invoke('get-games'),
+  getEstimatedFps: (res, preset, mfx) => ipcRenderer.invoke('get-estimated-fps', res, preset, mfx),
+  runMemoryBench: () => ipcRenderer.invoke('run-memory-bench'),
+  runDiskBench: () => ipcRenderer.invoke('run-disk-bench'),
+  runGameSimBench: () => ipcRenderer.invoke('run-game-sim-bench'),
+  runCpuPathTracer: (multi) => ipcRenderer.invoke('run-cpu-path-tracer', multi),
+  startStress: (type, maxTemp) => ipcRenderer.invoke('start-stress', type, maxTemp),
+  stopStress: () => ipcRenderer.invoke('stop-stress'),
+  getStressStatus: () => ipcRenderer.invoke('get-stress-status'),
+  cleanMemory: () => ipcRenderer.invoke('clean-memory'),
+  getTweaks: () => ipcRenderer.invoke('get-tweaks'),
+  setTweak: (id, val) => ipcRenderer.invoke('set-tweak', id, val),
+  restoreTweaks: () => ipcRenderer.invoke('restore-tweaks'),
+  getStartup: () => ipcRenderer.invoke('get-startup'),
+  toggleStartup: (path, val) => ipcRenderer.invoke('toggle-startup', path, val),
+  removeStartup: (path) => ipcRenderer.invoke('remove-startup', path),
+  getApps: () => ipcRenderer.invoke('get-apps'),
+  installApp: (id) => ipcRenderer.invoke('install-app', id),
+  getSerialPorts: () => ipcRenderer.invoke('get-serial-ports'),
+  releaseSerialPort: (path) => ipcRenderer.invoke('release-serial-port', path),
+  exportReport: (format) => ipcRenderer.invoke('export-report', format)
+});

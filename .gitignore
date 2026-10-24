@@ -18,3 +18,8 @@ ResetExplode-dist/
 
 # Drivers seriais embutidos (RESET MAKER): as DLLs fazem parte dos pacotes assinados
 !Drivers/**
+
+# Node / macOS
+node_modules/
+.playwright-mcp/
+.DS_Store

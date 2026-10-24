@@ -1,26 +1,35 @@
-RESET EXPLODE
-=============
+VS TOLLS
+========
 
-Ferramenta de diagnóstico de hardware: informações do sistema, sensores, placa de vídeo,
-FPS estimado em jogos, detector de gargalo, overlay de FPS, RESET BENCH (benchmarks de CPU, GPU, memória e disco)
-RESET OTIMIZA (limpeza de memória e ajustes para jogos) e stress test de CPU / RAM / GPU.
+Ferramenta profissional de diagnóstico de hardware, sensores, placa de vídeo,
+FPS estimado em jogos, detector de gargalo, overlay de FPS, VS BENCH (benchmarks de CPU, GPU, memória e disco),
+VS OTIMIZA (limpeza de memória e ajustes para jogos), stress test de hardware e ferramentas de inicialização.
 
-REQUISITOS
-- Windows 10 ou 11, 64 bits. Não precisa instalar o .NET (já vem dentro do .exe).
-- Para temperatura e consumo da CPU, instale o driver PawnIO (uma vez só):
-      winget install namazso.PawnIO
-- Aceite o pedido de administrador ao abrir (necessário para ler os sensores).
-- Se a temperatura/consumo da CPU não aparecerem, o menu lateral mostra o motivo e um
-  botão CORRIGIR, que instala o PawnIO com um clique. Depois feche e abra o programa.
-  Se instalou o PawnIO e mesmo assim não aparecer, reinicie o PC.
+Compatível com macOS (MacBook Pro/Air, Mac mini, Mac Studio, iMac) e Windows.
 
-COMO USAR
-- Abra o ResetExplode.exe. Na primeira vez ele demora alguns segundos para iniciar.
-- Se o Windows mostrar "O Windows protegeu o computador", clique em "Mais informações"
-  e depois em "Executar assim mesmo" (o programa não tem assinatura digital paga).
-- Overlay: Ctrl + Shift + O liga e desliga.
+COMO USAR NO MACBOOK (macOS)
+- Abra o terminal na pasta e execute:
+      ./run-mac.sh
+- Ou via npm:
+      npm start   (abre a janela nativa no Mac)
+      npm run web (abre no navegador em http://localhost:3000)
 
-OBSERVAÇÕES
-- Placas NVIDIA mostram mais detalhes (VBIOS, limites de energia, CUDA).
-- Configurações e histórico ficam em %AppData%\ResetExplode (não vão junto com o .exe).
-- Use os stress tests com o limite de temperatura ligado e boa ventilação.
+COMO USAR NO WINDOWS
+- Abra o executável VSTolls.exe ou execute:
+      dotnet run
+
+RECURSOS PRINCIPAIS
+- Visão Geral com telemetria em tempo real CPU × GPU e medidores circulares de carga.
+- Identificação precisa de hardware Apple Silicon (M1/M2/M3/M4) e Intel.
+- Sensores ao vivo a cada 1s (carga por núcleo, temperaturas, consumo em Watts e RPM).
+- Detalhes de GPU estilo GPU-Z adaptado para Metal 4 e Apple Silicon.
+- Saúde de SSD NVMe via telemetria S.M.A.R.T. (desgaste, horas de uso e veredito).
+- Diagnóstico de Bateria de MacBook (ciclos, saúde percentual, potência e autonomia).
+- Diagnóstico de Rede com latência para gateway e internet, DNS, jitter e bufferbloat (networkQuality).
+- VS BENCH: Cinebench-style Path Tracer determinístico, Cena 3D Metal, Simulação de 30k units, Banda de RAM e Disco.
+- GPU Burn estilo FurMark com torus peludo e alta intensidade de shaders.
+- VS OTIMIZA com limpeza de memória inativa e ajustes de sistema.
+- Gerenciador de Inicialização (LaunchAgents) com Ativar/Desativar e backup de restauração.
+- Instalador de apps pós-formatação via Homebrew Cask.
+- VS MAKER: detector de placas Arduino, ESP32, chips FTDI, CP2102, CH340 e liberador de portas seriais presas.
+- Exportação de relatório em HTML ou JSON na Área de Trabalho com 1 clique.

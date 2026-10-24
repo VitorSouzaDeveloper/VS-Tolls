@@ -1,0 +1,34 @@
+{
+  "name": "vs-tolls",
+  "version": "1.0.0",
+  "description": "VS Tolls — Diagnóstico de hardware, sensores, placa de vídeo, benchmarks, jogos e ferramentas para macOS e Windows.",
+  "main": "mac/main.js",
+  "scripts": {
+    "start": "electron mac/main.js",
+    "web": "node mac/server.js",
+    "mac": "./run-mac.sh"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/VitorSouzaDeveloper/VS-Tolls.git"
+  },
+  "keywords": [
+    "hardware",
+    "benchmark",
+    "diagnostics",
+    "apple-silicon",
+    "macos",
+    "gaming",
+    "vs-tolls"
+  ],
+  "author": "Vitor Souza",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.21.2",
+    "three": "^0.170.0",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "electron": "^33.2.1"
+  }
+}

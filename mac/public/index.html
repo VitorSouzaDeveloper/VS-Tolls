@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VS Tolls</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body class="theme-dark">
+  <div class="app-layout">
+    <!-- Top Header Bar -->
+    <header class="app-header">
+      <div class="window-traffic-spacer"></div>
+      <div class="header-brand">
+        <svg class="brand-logo-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 46" width="26" height="23" fill="none">
+          <path d="M 26,22 L 25,24 L 24,26 L 24,28 L 23,30 L 22,32 L 25,32 L 28,34 L 29,30 L 31,27 L 31,24 L 29,23 Z M 3,0 L 1,1 L 0,5 L 3,12 L 13,33 L 18,43 L 20,45 L 22,45 L 24,42 L 20,38 L 19,35 L 20,32 L 19,29 L 10,12 L 10,10 L 7,4 L 6,2 L 5,1 Z " fill="currentColor" opacity="0.45" />
+          <path d="M 34,0 L 32,1 L 30,2 L 25,7 L 24,9 L 23,12 L 23,15 L 24,18 L 26,20 L 29,22 L 31,23 L 33,24 L 36,25 L 40,25 L 42,26 L 43,27 L 43,28 L 44,30 L 43,32 L 38,37 L 33,38 L 29,37 L 27,36 L 24,33 L 21,33 L 21,37 L 26,42 L 28,43 L 32,44 L 35,44 L 39,43 L 42,42 L 48,36 L 49,34 L 50,31 L 50,27 L 49,25 L 48,23 L 47,22 L 45,21 L 41,19 L 37,19 L 34,18 L 32,17 L 30,15 L 29,13 L 30,11 L 34,7 L 36,6 L 41,6 L 43,7 L 44,8 L 44,9 L 46,11 L 48,12 L 50,11 L 51,9 L 51,7 L 48,3 L 45,1 L 42,0 Z " fill="currentColor" />
+        </svg>
+        <div class="brand-titles">
+          <span class="brand-title">VS TOLLS</span>
+          <span class="brand-badge">macOS</span>
+        </div>
+      </div>
+
+      <div class="header-quick-stats">
+        <div class="stat-pill" id="headCpuPill">
+          <span class="pill-dot cpu-dot"></span>
+          <span class="pill-label">CPU:</span>
+          <span class="pill-val" id="headCpuVal">0% · 37°C</span>
+        </div>
+        <div class="stat-pill" id="headGpuPill">
+          <span class="pill-dot gpu-dot"></span>
+          <span class="pill-label">GPU:</span>
+          <span class="pill-val" id="headGpuVal">0% · 36°C</span>
+        </div>
+        <div class="stat-pill" id="headMemPill">
+          <span class="pill-dot mem-dot"></span>
+          <span class="pill-label">RAM:</span>
+          <span class="pill-val" id="headMemVal">0 GB / 16 GB</span>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <button id="btnExportReport" class="btn-action-sm" title="Exportar Relatório do Mac">
+          Exportar Relatório
+        </button>
+        <button id="btnThemeToggle" class="btn-action-sm" title="Alternar Modo Escuro / Claro">
+          <span id="themeText">Modo Claro</span>
+        </button>
+      </div>
+    </header>
+
+    <div class="app-body">
+      <!-- Collapsible Sidebar Navigation -->
+      <aside class="app-sidebar">
+        <div class="sidebar-scroll">
+          <button class="nav-item active" data-page="dash">
+            <span class="nav-text">Visão Geral</span>
+          </button>
+
+          <!-- Group VS TOLLS -->
+          <div class="nav-group-header" data-toggle="grp-tolls">
+            <span class="group-title">VS TOLLS</span>
+            <span class="group-arrow">▾</span>
+          </div>
+          <div class="nav-group-items" id="grp-tolls">
+            <button class="nav-subitem" data-page="system">Sistema</button>
+            <button class="nav-subitem" data-page="sensors">Sensores</button>
+            <button class="nav-subitem" data-page="gpu">Placa de Vídeo</button>
+            <button class="nav-subitem" data-page="disks">Discos</button>
+            <button class="nav-subitem" data-page="energy">Energia</button>
+            <button class="nav-subitem" data-page="net">Rede</button>
+          </div>
+
+          <!-- Group VS JOGOS -->
+          <div class="nav-group-header" data-toggle="grp-games">
+            <span class="group-title">VS JOGOS</span>
+            <span class="group-arrow">▾</span>
+          </div>
+          <div class="nav-group-items" id="grp-games">
+            <button class="nav-subitem" data-page="launcher">Biblioteca</button>
+            <button class="nav-subitem" data-page="games">FPS Estimado</button>
+            <button class="nav-subitem" data-page="bottleneck">Gargalo</button>
+            <button class="nav-subitem" data-page="overlay">Overlay</button>
+          </div>
+
+          <!-- Group VS DESEMPENHO -->
+          <div class="nav-group-header" data-toggle="grp-perf">
+            <span class="group-title">VS DESEMPENHO</span>
+            <span class="group-arrow">▾</span>
+          </div>
+          <div class="nav-group-items" id="grp-perf">
+            <button class="nav-subitem" data-page="bench">Benchmark (VS BENCH)</button>
+            <button class="nav-subitem" data-page="stress">Stress Test & GPU Burn</button>
+            <button class="nav-subitem" data-page="oc">Mac Tuning & Estabilidade</button>
+          </div>
+
+          <!-- Group VS FERRAMENTAS -->
+          <div class="nav-group-header" data-toggle="grp-tools">
+            <span class="group-title">VS FERRAMENTAS</span>
+            <span class="group-arrow">▾</span>
+          </div>
+          <div class="nav-group-items" id="grp-tools">
+            <button class="nav-subitem" data-page="optimize">Otimização (VS OTIMIZA)</button>
+            <button class="nav-subitem" data-page="startup">Inicialização</button>
+            <button class="nav-subitem" data-page="apps">Instalar Apps</button>
+            <button class="nav-subitem" data-page="driver">Drivers & Kexts</button>
+          </div>
+
+          <!-- Group VS MAKER -->
+          <div class="nav-group-header" data-toggle="grp-maker">
+            <span class="group-title">VS MAKER</span>
+            <span class="group-arrow">▾</span>
+          </div>
+          <div class="nav-group-items" id="grp-maker">
+            <button class="nav-subitem" data-page="maker-ports">Portas Seriais</button>
+            <button class="nav-subitem" data-page="maker-drv">Drivers Seriais</button>
+          </div>
+        </div>
+
+        <div class="sidebar-footer">
+          <div class="footer-meter">
+            <div class="meter-labels">
+              <span>CPU SoC</span>
+              <span id="footerCpuPct">0%</span>
+            </div>
+            <div class="meter-bar"><div class="meter-fill cpu-fill" id="footerCpuBar" style="width: 0%"></div></div>
+          </div>
+          <div class="footer-meter">
+            <div class="meter-labels">
+              <span>GPU Metal</span>
+              <span id="footerGpuPct">0%</span>
+            </div>
+            <div class="meter-bar"><div class="meter-fill gpu-fill" id="footerGpuBar" style="width: 0%"></div></div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Main Content Pages -->
+      <main class="app-main">
+
+        <!-- 1. DASHBOARD -->
+        <section id="page-dash" class="view-page active">
+          <div class="page-title-row">
+            <h2>Visão Geral do Mac</h2>
+            <div class="badge-status-good" id="dashMacHealthBadge">SISTEMA SAUDÁVEL</div>
+          </div>
+
+          <!-- Top Metric Rings Grid -->
+          <div class="gauges-grid">
+            <div class="card gauge-card">
+              <div class="gauge-ring" id="ringCpu">
+                <svg viewBox="0 0 36 36" class="circular-chart">
+                  <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                  <path class="circle circle-cpu" id="ringCpuPath" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                  <text x="18" y="20.35" class="percentage" id="dashRingCpuText">0%</text>
+                </svg>
+              </div>
+              <div class="gauge-meta">
+                <div class="gauge-title">Uso de CPU</div>
+                <div class="gauge-sub" id="dashCpuSub">Apple M1 Pro</div>
+              </div>
+            </div>
+
+            <div class="card gauge-card">
+              <div class="gauge-ring" id="ringMem">
+                <svg viewBox="0 0 36 36" class="circular-chart">
+                  <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                  <path class="circle circle-mem" id="ringMemPath" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                  <text x="18" y="20.35" class="percentage" id="dashRingMemText">0%</text>
+                </svg>
+              </div>
+              <div class="gauge-meta">
+                <div class="gauge-title">Memória Unificada</div>
+                <div class="gauge-sub" id="dashMemSub">0 / 16 GB</div>
+                <div class="gauge-pressure" id="dashMemPressure"><span class="badge-pressure badge-pressure-green">Pressão: Normal</span></div>
+              </div>
+            </div>
+
+            <div class="card gauge-card">
+              <div class="gauge-ring" id="ringDisk">
+                <svg viewBox="0 0 36 36" class="circular-chart">
+                  <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                  <path class="circle circle-disk" id="ringDiskPath" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                  <text x="18" y="20.35" class="percentage" id="dashRingDiskText">0%</text>
+                </svg>
+              </div>
+              <div class="gauge-meta">
+                <div class="gauge-title">Armazenamento</div>
+                <div class="gauge-sub" id="dashDiskSub">Apple SSD NVMe</div>
+              </div>
+            </div>
+
+            <div class="card gauge-card">
+              <div class="gauge-ring" id="ringBatt">
+                <svg viewBox="0 0 36 36" class="circular-chart">
+                  <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                  <path class="circle circle-batt" id="ringBattPath" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                  <text x="18" y="20.35" class="percentage" id="dashRingBattText">0%</text>
+                </svg>
+              </div>
+              <div class="gauge-meta">
+                <div class="gauge-title">Bateria</div>
+                <div class="gauge-sub" id="dashBattSub">Descarregando</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Real-time Area Chart -->
+          <div class="card chart-card">
+            <div class="card-header">
+              <div class="card-title">Telemetria em Tempo Real (CPU vs GPU)</div>
+              <div class="chart-controls">
+                <span class="legend-badge cpu-badge">■ CPU %</span>
+                <span class="legend-badge gpu-badge">■ GPU %</span>
+              </div>
+            </div>
+            <div class="chart-canvas-container">
+              <canvas id="dashAreaChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Components & Benchmark Summary Grid -->
+          <div class="two-col-grid">
+            <div class="card">
+              <div class="card-title">Especificações do Sistema</div>
+              <div class="specs-table" id="dashSpecsTable">
+                <!-- Dynamically populated -->
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-title">VS BENCH — Resultados Recentes</div>
+              <div class="bench-quick-scores">
+                <div class="bench-score-item">
+                  <span class="bench-label">CPU Multi-Core (Path Tracer)</span>
+                  <span class="bench-val" id="dashScoreCpuMulti">4.650 pts</span>
+                </div>
+                <div class="bench-score-item">
+                  <span class="bench-label">CPU Single-Core</span>
+                  <span class="bench-val" id="dashScoreCpuSingle">620 pts</span>
+                </div>
+                <div class="bench-score-item">
+                  <span class="bench-label">GPU 3D Metal Scene</span>
+                  <span class="bench-val" id="dashScoreGpu">1.280 pts</span>
+                </div>
+                <div class="bench-score-item">
+                  <span class="bench-label">Leitura Sequencial SSD</span>
+                  <span class="bench-val" id="dashScoreDisk">3.200 MB/s</span>
+                </div>
+              </div>
+              <div class="bench-callout">
+                Execute o VS BENCH para atualizar sua pontuação de referência determinística.
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 2. SISTEMA -->
+        <section id="page-system" class="view-page">
+          <div class="page-title-row">
+            <h2>Informações do Sistema</h2>
+            <button class="btn-action-sm" onclick="exportReport('html')">Exportar HTML</button>
+          </div>
+          <div class="card" id="systemTreeCard">
+            <!-- Dynamically populated info tree -->
+          </div>
+        </section>
+
+        <!-- 3. SENSORES -->
+        <section id="page-sensors" class="view-page">
+          <div class="page-title-row">
+            <h2>Sensores em Tempo Real</h2>
+            <div class="sensors-filter-bar">
+              <input type="text" id="sensorSearchInput" class="input-search" placeholder="Filtrar sensor (CPU, GPU, Temp...)">
+              <div class="filter-chips">
+                <button class="chip active" data-filter="all">Todos</button>
+                <button class="chip" data-filter="cpu">CPU</button>
+                <button class="chip" data-filter="gpu">GPU</button>
+                <button class="chip" data-filter="temp">Temperatura</button>
+                <button class="chip" data-filter="power">Potência</button>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="sensors-grid" id="sensorsGrid">
+              <!-- Dynamically populated sensor rows -->
+            </div>
+          </div>
+        </section>
+
+        <!-- 4. PLACA DE VÍDEO -->
+        <section id="page-gpu" class="view-page">
+          <div class="page-title-row">
+            <h2>Placa de Vídeo (Estilo GPU-Z · Apple Silicon)</h2>
+          </div>
+          <div class="two-col-grid">
+            <div class="card" id="gpuSpecsCard">
+              <!-- Dynamically populated GPU specs -->
+            </div>
+            <div class="card" id="gpuLiveCard">
+              <div class="card-title">Métricas ao Vivo da GPU</div>
+              <div class="gpu-meters" id="gpuLiveMeters">
+                <!-- Dynamically populated -->
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 5. DISCOS -->
+        <section id="page-disks" class="view-page">
+          <div class="page-title-row">
+            <h2>Saúde dos Discos & S.M.A.R.T.</h2>
+          </div>
+          <div id="disksCardsContainer" class="cards-stack">
+            <!-- Dynamically populated disks -->
+          </div>
+        </section>
+
+        <!-- 6. ENERGIA -->
+        <section id="page-energy" class="view-page">
+          <div class="page-title-row">
+            <h2>Bateria & Gestão de Energia</h2>
+          </div>
+          <div class="two-col-grid">
+            <div class="card" id="energyBatteryCard">
+              <!-- Dynamically populated -->
+            </div>
+            <div class="card" id="energyPowerCard">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+        </section>
+
+        <!-- 7. REDE -->
+        <section id="page-net" class="view-page">
+          <div class="page-title-row">
+            <h2>Diagnóstico de Rede & Latência</h2>
+            <button id="btnRunNetworkTest" class="btn-action">Iniciar Diagnóstico Completo</button>
+          </div>
+          <div class="two-col-grid">
+            <div class="card" id="netMetricsCard">
+              <div class="card-title">Latência & Conexão</div>
+              <div class="net-grid" id="netResultsGrid">
+                <!-- Dynamically populated -->
+              </div>
+            </div>
+            <div class="card" id="netVerdictCard">
+              <div class="card-title">Veredito da Conexão</div>
+              <div class="verdict-box" id="netVerdictBox">
+                Clique em "Iniciar Diagnóstico Completo" para medir latência, jitter, perda de pacotes e qualidade.
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 8. BIBLIOTECA DE JOGOS -->
+        <section id="page-launcher" class="view-page">
+          <div class="page-title-row">
+            <h2>Biblioteca de Jogos</h2>
+          </div>
+          <div class="card">
+            <div id="gamesLibraryList" class="games-grid">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+        </section>
+
+        <!-- 9. FPS ESTIMADO -->
+        <section id="page-games" class="view-page">
+          <div class="page-title-row">
+            <h2>FPS Estimado em Jogos</h2>
+            <div class="fps-controls">
+              <select id="fpsResSelect" class="select-sm">
+                <option value="1080p">1080p (FHD)</option>
+                <option value="1440p">1440p (QHD)</option>
+                <option value="4K">4K (UHD)</option>
+              </select>
+              <select id="fpsPresetSelect" class="select-sm">
+                <option value="Baixa">Baixa</option>
+                <option value="Média">Média</option>
+                <option value="Alta" selected>Alta</option>
+                <option value="Ultra">Ultra</option>
+              </select>
+              <label class="checkbox-label">
+                <input type="checkbox" id="fpsMetalFxCheck" checked>
+                MetalFX Upscaling
+              </label>
+            </div>
+          </div>
+          <div class="card">
+            <div class="fps-table-container">
+              <table class="data-table" id="fpsCatalogTable">
+                <thead>
+                  <tr>
+                    <th>Jogo</th>
+                    <th>Gênero</th>
+                    <th>Modo</th>
+                    <th>MetalFX</th>
+                    <th>FPS Médio</th>
+                    <th>1% Low</th>
+                  </tr>
+                </thead>
+                <tbody id="fpsTableBody">
+                  <!-- Dynamically populated -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- 10. GARGALO -->
+        <section id="page-bottleneck" class="view-page">
+          <div class="page-title-row">
+            <h2>Detector de Gargalo (CPU × GPU)</h2>
+          </div>
+          <div class="two-col-grid">
+            <div class="card" id="bottleneckGaugeCard">
+              <div class="card-title">Balanço de Carga do Apple Silicon</div>
+              <div class="bottleneck-balance-bar">
+                <div class="balance-cpu" id="bneckCpuBar" style="width: 50%">CPU 50%</div>
+                <div class="balance-gpu" id="bneckGpuBar" style="width: 50%">GPU 50%</div>
+              </div>
+              <div class="verdict-box" id="bneckVerdictBox">
+                <!-- Dynamically populated -->
+              </div>
+            </div>
+            <div class="card" id="bottleneckRecsCard">
+              <div class="card-title">Recomendações de Otimização</div>
+              <ul class="recs-list" id="bneckRecsList">
+                <!-- Dynamically populated -->
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <!-- 11. OVERLAY -->
+        <section id="page-overlay" class="view-page">
+          <div class="page-title-row">
+            <h2>Overlay de Jogos (HUD)</h2>
+          </div>
+          <div class="two-col-grid">
+            <div class="card">
+              <div class="card-title">Configurações do Overlay</div>
+              <div class="overlay-options">
+                <label class="checkbox-label"><input type="checkbox" checked id="ovFps"> FPS & Frametimes</label>
+                <label class="checkbox-label"><input type="checkbox" checked id="ovCpu"> Uso e Temperatura da CPU</label>
+                <label class="checkbox-label"><input type="checkbox" checked id="ovGpu"> Uso e Temperatura da GPU</label>
+                <label class="checkbox-label"><input type="checkbox" checked id="ovMem"> Memória Unificada Utilizada</label>
+                <label class="checkbox-label"><input type="checkbox" checked id="ovBatt"> Bateria & Consumo Watts</label>
+              </div>
+              <button class="btn-action" style="margin-top: 16px;" id="btnToggleFloatingOverlay">Alternar Overlay Flutuante</button>
+            </div>
+            <div class="card">
+              <div class="card-title">Pré-visualização do HUD</div>
+              <div class="hud-preview-box">
+                <div class="hud-line"><span class="hud-lbl">FPS</span> <span class="hud-val" id="hudPrevFps">118 FPS</span> (8.4 ms)</div>
+                <div class="hud-line"><span class="hud-lbl">M1 PRO</span> <span class="hud-val">14 Cores Metal · 42°C · 14.2 W</span></div>
+                <div class="hud-line"><span class="hud-lbl">CPU</span> <span class="hud-val">28% · 44°C · 6P + 2E</span></div>
+                <div class="hud-line"><span class="hud-lbl">RAM</span> <span class="hud-val">9.2 GB / 16 GB (LPDDR5)</span></div>
+                <div class="hud-line"><span class="hud-lbl">BATT</span> <span class="hud-val">62% · 18.5 W</span></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 12. BENCHMARK (VS BENCH) -->
+        <section id="page-bench" class="view-page">
+          <div class="page-title-row">
+            <h2>VS BENCH · Suíte de Benchmarks</h2>
+          </div>
+          <div class="bench-tabs">
+            <button class="tab-btn active" data-tab="tab-cpu-bench">CPU Path Tracer</button>
+            <button class="tab-btn" data-tab="tab-gpu-bench">GPU 3D Scene</button>
+            <button class="tab-btn" data-tab="tab-sim-bench">Simulação de Jogo</button>
+            <button class="tab-btn" data-tab="tab-mem-bench">Memória</button>
+            <button class="tab-btn" data-tab="tab-disk-bench">Disco NVMe</button>
+          </div>
+
+          <!-- Tab CPU Path Tracer -->
+          <div class="tab-content active" id="tab-cpu-bench">
+            <div class="two-col-grid">
+              <div class="card">
+                <div class="card-title">Path Tracer Monocromático (Cinebench-style)</div>
+                <p class="text-muted">Iluminação global determinística com reflexos de metal, refração em vidro e sombras suaves.</p>
+                <div class="bench-actions">
+                  <button id="btnStartCpuMulti" class="btn-action">Iniciar Multi-Core</button>
+                  <button id="btnStartCpuSingle" class="btn-action-outline">Iniciar Single-Core</button>
+                </div>
+                <div class="bench-results-box" id="cpuBenchResultBox">
+                  <div class="result-number" id="cpuBenchScoreText">---</div>
+                  <div class="result-desc">Pontuação VS BENCH (amostras/s ÷ 10.000)</div>
+                </div>
+              </div>
+              <div class="card">
+                <div class="card-title">Visualização em Tempo Real dos Blocos</div>
+                <div class="render-canvas-wrap">
+                  <canvas id="cpuRenderCanvas" width="480" height="270"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tab GPU 3D Scene -->
+          <div class="tab-content" id="tab-gpu-bench">
+            <div class="card">
+              <div class="card-header">
+                <div>
+                  <div class="card-title">Cena 3D Metal / WebGL (Terreno + Instancing + Sombras)</div>
+                  <div class="text-muted">Mede FPS médio e 1% low em percurso cinematográfico sobre terreno fractal.</div>
+                </div>
+                <button id="btnStartGpuBench" class="btn-action">Iniciar Benchmark de GPU (15s)</button>
+              </div>
+              <div class="gpu-bench-wrap">
+                <div class="bench-hud-overlay">
+                  <span id="gpuBenchLiveFps">-- FPS</span>
+                </div>
+                <div class="bench-progress"><div class="bench-progress-bar" id="gpuBenchProgressBar"></div></div>
+                <canvas id="gpuBenchCanvas"></canvas>
+              </div>
+              <div class="bench-results-box" id="gpuBenchResultBox" style="margin-top: 16px;">
+                <span id="gpuBenchFinalScore">Clique em "Iniciar Benchmark de GPU" para testar a taxa de quadros.</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tab Simulação de Jogo -->
+          <div class="tab-content" id="tab-sim-bench">
+            <div class="card">
+              <div class="card-title">Simulação de Frente de Batalha (30.000 Unidades)</div>
+              <p class="text-muted">Mede o processamento multi-core da CPU para IA, grade espacial e colisões massivas.</p>
+              <button id="btnStartGameSim" class="btn-action">Iniciar Simulação (30k Units)</button>
+              <div class="bench-results-box" id="simBenchResultBox" style="margin-top: 16px;">
+                <div class="result-number" id="simFpsText">---</div>
+                <div class="result-desc">FPS da Simulação de Jogo</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tab Memória -->
+          <div class="tab-content" id="tab-mem-bench">
+            <div class="card">
+              <div class="card-title">Banda & Latência da Memória Unificada</div>
+              <p class="text-muted">Testa a taxa de transferência sequencial (GB/s) e latência de acesso por ponteiros aleatórios (ns).</p>
+              <button id="btnStartMemBench" class="btn-action">Testar Memória</button>
+              <div class="bench-results-box" id="memBenchResultBox" style="margin-top: 16px;">
+                <div class="result-number" id="memBenchScoreText">---</div>
+                <div class="result-desc" id="memBenchDetailText">Clique para iniciar o teste de largura de banda</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tab Disco NVMe -->
+          <div class="tab-content" id="tab-disk-bench">
+            <div class="card">
+              <div class="card-title">Velocidade do SSD NVMe Apple Fabric</div>
+              <p class="text-muted">Mede leitura/escrita sequencial 1MB e leitura/escrita aleatória 4K com bypass de cache.</p>
+              <button id="btnStartDiskBench" class="btn-action">Testar SSD</button>
+              <div class="bench-results-box" id="diskBenchResultBox" style="margin-top: 16px;">
+                <div class="result-number" id="diskBenchScoreText">---</div>
+                <div class="result-desc" id="diskBenchDetailText">Clique para iniciar o teste de disco</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 13. STRESS TEST & GPU BURN -->
+        <section id="page-stress" class="view-page">
+          <div class="page-title-row">
+            <h2>Stress Test & GPU Burn</h2>
+          </div>
+          <div class="two-col-grid">
+            <div class="card">
+              <div class="card-title">Stress de CPU & Memória RAM</div>
+              <div class="stress-controls">
+                <label>Tipo de Teste:</label>
+                <select id="stressTypeSelect" class="select-sm">
+                  <option value="cpu">CPU (Todos os Núcleos)</option>
+                  <option value="ram">Memória RAM</option>
+                  <option value="both">CPU + RAM</option>
+                </select>
+                <label>Limite Térmico de Segurança (°C):</label>
+                <input type="number" id="stressMaxTemp" class="input-sm" value="92" min="70" max="102">
+                <div class="stress-btn-row">
+                  <button id="btnStartStress" class="btn-action">Iniciar Stress</button>
+                  <button id="btnStopStress" class="btn-danger" disabled>Parar</button>
+                </div>
+              </div>
+              <div class="stress-log-box" id="stressLogBox">
+                [Sistema pronto] Escolha os parâmetros e inicie o teste de estresse térmico.
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <div>
+                  <div class="card-title">GPU Burn (FurMark-style Torus)</div>
+                  <div class="text-muted">Torus peludo com 36-64 conchas e cálculos intensivos de shaders.</div>
+                </div>
+                <div class="burn-controls">
+                  <select id="burnIntensitySelect" class="select-sm">
+                    <option value="Normal">Normal</option>
+                    <option value="Alta" selected>Alta</option>
+                    <option value="Extrema">Extrema</option>
+                  </select>
+                  <button id="btnToggleGpuBurn" class="btn-action">Ligar GPU Burn</button>
+                </div>
+              </div>
+              <div class="gpu-burn-canvas-wrap">
+                <div class="burn-hud-overlay"><span id="gpuBurnFpsVal">0 FPS</span></div>
+                <canvas id="gpuBurnCanvas"></canvas>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 14. MAC TUNING & ESTABILIDADE -->
+        <section id="page-oc" class="view-page">
+          <div class="page-title-row">
+            <h2>Mac Tuning & Estabilidade de Hardware</h2>
+          </div>
+          <div class="two-col-grid">
+            <div class="card" id="ocThermalCard">
+              <div class="card-title">Monitor do Regulador Térmico da Apple</div>
+              <div class="specs-table" id="ocThermalTable">
+                <!-- Dynamically populated -->
+              </div>
+            </div>
+            <div class="card" id="ocStabilityCard">
+              <div class="card-title">Diagnóstico de Estabilidade de Hardware</div>
+              <div class="verdict-box" id="ocVerdictBox">
+                Nenhum erro de hardware (Kernel Panic ou reinício inesperado) detectado nos últimos relatórios do sistema.
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 15. OTIMIZAÇÃO (VS OTIMIZA) -->
+        <section id="page-optimize" class="view-page">
+          <div class="page-title-row">
+            <h2>VS OTIMIZA · Limpeza & Ajustes para Jogos</h2>
+            <button id="btnCleanMemory" class="btn-action">Limpar Memória Inativa & Buffers</button>
+          </div>
+          <div class="two-col-grid">
+            <div class="card">
+              <div class="card-title">Ajustes do macOS para Jogos & Responsividade</div>
+              <div class="tweaks-list" id="tweaksContainer">
+                <!-- Dynamically populated tweaks -->
+              </div>
+              <button id="btnRestoreTweaks" class="btn-action-outline" style="margin-top: 16px;">Restaurar Padrões do macOS</button>
+            </div>
+
+            <div class="card">
+              <div class="card-title">Processos em Segundo Plano Seguros</div>
+              <p class="text-muted">Encerre programas pesados em segundo plano antes de jogar para liberar RAM e ciclos de CPU.</p>
+              <div class="bg-process-list" id="bgProcessList">
+                <!-- Dynamically populated -->
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 16. INICIALIZAÇÃO (STARTUP MANAGER) -->
+        <section id="page-startup" class="view-page">
+          <div class="page-title-row">
+            <h2>Programas na Inicialização (LaunchAgents)</h2>
+          </div>
+          <div class="startup-info-banner">
+            <strong>Gerenciamento Seguro de Inicialização:</strong> Itens com escopo <em>Sistema</em> pertencem a <code>/Library/LaunchAgents</code> e requerem autorização do macOS (Touch ID ou Senha de Administrador). Ao desativar ou remover qualquer item, um backup automático é criado para que você possa restaurá-lo a qualquer momento.
+          </div>
+          <div class="card">
+            <div class="startup-table-container">
+              <table class="data-table" id="startupTable">
+                <thead>
+                  <tr>
+                    <th>Ativo</th>
+                    <th>Nome / Label</th>
+                    <th>Escopo</th>
+                    <th>Programa Associado</th>
+                    <th>Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="startupTableBody">
+                  <!-- Dynamically populated -->
+                </tbody>
+              </table>
+            </div>
+            <div class="backup-restore-container" id="startupBackupsContainer" style="display:none;">
+              <div class="card-title" style="margin-bottom: 8px;">Itens Removidos em Backup</div>
+              <p class="text-muted" style="margin-bottom: 12px; font-size: 12px;">Se você removeu um item por engano, clique para restaurar para sua localização original.</p>
+              <div id="startupBackupsList" class="cards-stack">
+                <!-- Dynamically populated backups -->
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 17. INSTALAR APPS -->
+        <section id="page-apps" class="view-page">
+          <div class="page-title-row">
+            <h2>Instalar Apps Essenciais (Pós-Formatação)</h2>
+            <span class="badge-status-good">Via Homebrew Cask</span>
+          </div>
+          <div class="card">
+            <div class="apps-grid" id="appsCatalogGrid">
+              <!-- Dynamically populated apps -->
+            </div>
+          </div>
+        </section>
+
+        <!-- 18. DRIVERS & KEXTS -->
+        <section id="page-driver" class="view-page">
+          <div class="page-title-row">
+            <h2>Drivers & Extensões do Sistema</h2>
+          </div>
+          <div class="card">
+            <div class="card-title">Extensões de Kernel (KEXTs) e DriverKit (DEXTs)</div>
+            <div class="specs-table" id="driverSpecsTable">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+        </section>
+
+        <!-- 19. VS MAKER: PORTAS SERIAIS -->
+        <section id="page-maker-ports" class="view-page">
+          <div class="page-title-row">
+            <h2>VS MAKER · Portas Seriais (USB / Microcontroladores)</h2>
+            <button id="btnRefreshSerial" class="btn-action-sm">Atualizar Portas</button>
+          </div>
+          <div class="card">
+            <div class="ports-list" id="serialPortsContainer">
+              <!-- Dynamically populated serial ports -->
+            </div>
+          </div>
+        </section>
+
+        <!-- 20. VS MAKER: DRIVERS SERIAIS -->
+        <section id="page-maker-drv" class="view-page">
+          <div class="page-title-row">
+            <h2>VS MAKER · Drivers Seriais (CH340, CP2102, FTDI, Arduino)</h2>
+          </div>
+          <div class="card">
+            <div class="driver-guides-stack" id="makerDriversGuide">
+              <!-- Dynamically populated driver guides -->
+            </div>
+          </div>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+  <script src="gpuBurn.js"></script>
+  <script src="gpuBench.js"></script>
+  <script src="renderer.js"></script>
+</body>
+</html>
