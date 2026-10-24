@@ -25,5 +25,11 @@ contextBridge.exposeInMainWorld('vsTollsAPI', {
   installApp: (id) => ipcRenderer.invoke('install-app', id),
   getSerialPorts: () => ipcRenderer.invoke('get-serial-ports'),
   releaseSerialPort: (path) => ipcRenderer.invoke('release-serial-port', path),
-  exportReport: (format) => ipcRenderer.invoke('export-report', format)
+  exportReport: (format) => ipcRenderer.invoke('export-report', format),
+  openWidget: () => ipcRenderer.invoke('open-widget'),
+  closeWidget: () => ipcRenderer.invoke('close-widget'),
+  toggleWidgetPin: (pinned) => ipcRenderer.invoke('toggle-widget-pin', pinned),
+  openMain: () => ipcRenderer.invoke('open-main'),
+  getAutoStart: () => ipcRenderer.invoke('get-autostart-status'),
+  setAutoStart: (enable, widgetOnly) => ipcRenderer.invoke('set-autostart', enable, widgetOnly)
 });

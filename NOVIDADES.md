@@ -12,4 +12,11 @@
 - **Inicialização no macOS**: Controle de LaunchAgents do usuário e do sistema (`~/Library/LaunchAgents`) com interruptor para ativar/desativar e backup de restauração.
 - **Instalador de Apps via Homebrew Cask**: Instalação pós-formatação de Steam, Chrome, Discord, VLC, VS Code, Keka, Spotify e Blender.
 - **VS MAKER no macOS**: Detecção de microcontroladores em portas `/dev/cu.*` (Arduino, ESP32, CH340, CP2102, FTDI) e liberador de portas seriais presas.
-- **Novo Logo Vetorial Minimalista**: Identidade visual com o monograma vetorial VS em formato SVG preto e branco perfeitamente integrado ao design.
+- **Novo Logo Vetorial Minimalista**: Identidade visual com o monograma vetorial VS em formato SVG perfeitamente integrado ao design, sem uso de packs de emojis genéricos.
+- **Widget de Mesa Flutuante / Fixado na Mesa**: Mini-painel frameless no estilo Apple (330x220px) com glassmorphism, exibindo telemetria ao vivo de CPU, RAM real, Bateria, SSD Apple e Pressão de Memória. Permite fixar na mesa ou manter flutuante, arrastar para qualquer posição e abrir o painel principal com 1 clique.
+- **Inicialização Automática com o macOS**: Integração nativa com `~/Library/LaunchAgents` permitindo iniciar o VS Tolls no login do Mac, com opção exclusiva de abrir apenas o Mini-Widget silencioso.
+- **Otimização Extrema de CPU e RAM para Ficar Sempre Aberto**:
+  - Caching inteligente em memória de comandos pesados do sistema (`system_profiler`, `diskutil`, `ioreg`, `pmset`, `vm_stat`, `sysctl`). Tempo de resposta caiu de centenas de milissegundos para **0.02ms**.
+  - Redução dinâmica de taxa de atualização (throttling): reduz polling para 6 segundos quando o aplicativo ou widget estiver minimizado ou em segundo plano, caindo para **0.0% de uso de CPU**.
+  - Redesenho de gráficos Canvas condicional: o gráfico histórico só consome ciclos de GPU quando a aba Visão Geral estiver ativamente visível.
+

@@ -25,7 +25,10 @@ const api = window.vsTollsAPI || {
   installApp: (id) => fetch(`/api/apps/install?id=${id}`).then(r => r.json()),
   getSerialPorts: () => fetch('/api/maker/ports').then(r => r.json()),
   releaseSerialPort: (path) => fetch(`/api/maker/release?path=${encodeURIComponent(path)}`).then(r => r.json()),
-  exportReport: (format) => fetch(`/api/report?format=${format}`).then(r => r.json())
+  exportReport: (format) => fetch(`/api/report?format=${format}`).then(r => r.json()),
+  openWidget: () => (window.vsTollsAPI && window.vsTollsAPI.openWidget) ? window.vsTollsAPI.openWidget() : fetch('/api/widget/status').then(r => r.json()),
+  getAutoStart: () => (window.vsTollsAPI && window.vsTollsAPI.getAutoStart) ? window.vsTollsAPI.getAutoStart() : fetch('/api/autostart/status').then(r => r.json()),
+  setAutoStart: (enable, widgetOnly) => (window.vsTollsAPI && window.vsTollsAPI.setAutoStart) ? window.vsTollsAPI.setAutoStart(enable, widgetOnly) : fetch(`/api/autostart/toggle?enable=${enable}&widgetOnly=${widgetOnly}`).then(r => r.json())
 };
 
 // Global state
@@ -174,7 +177,12 @@ async function updateSensors() {
     cpuHistory.push(snap.cpu.usage);
     gpuHistory.shift();
     gpuHistory.push(snap.gpu.usage);
-    drawAreaChart();
+
+    // Only redraw chart if dashboard is visible to eliminate CPU usage
+    const isDashActive = document.getElementById('page-dash').classList.contains('active');
+    if (isDashActive && !document.hidden) {
+      drawAreaChart();
+    }
 
     // Dashboard Circular Rings
     updateRing('ringCpuPath', 'dashRingCpuText', snap.cpu.usage);
@@ -758,6 +766,50 @@ async function loadStartupItems() {
       backupsContainer.style.display = 'none';
     }
   }
+  loadAutoStartStatus();
+}
+
+window.openDesktopWidget = async () => {
+  if (window.vsTollsAPI && window.vsTollsAPI.openWidget) {
+    await window.vsTollsAPI.openWidget();
+  } else {
+    const w = 330;
+    const h = 220;
+    const left = window.screen.width - w - 24;
+    const top = 48;
+    window.open('/widget.html', 'VS_Tolls_Widget', `width=${w},height=${h},top=${top},left=${left},frame=false,transparent=yes,resizable=no`);
+  }
+};
+
+window.toggleAutoStart = async (enable) => {
+  const widgetOnly = document.getElementById('chkAutoStartWidgetOnly') ? document.getElementById('chkAutoStartWidgetOnly').checked : true;
+  const res = await api.setAutoStart(enable, widgetOnly);
+  if (!res.success) {
+    alert(`Erro ao configurar inicialização com o Mac:\n${res.error || 'Operação negada.'}`);
+  }
+  loadAutoStartStatus();
+};
+
+window.updateAutoStartMode = async () => {
+  const isEnabled = document.getElementById('chkAutoStartMac').checked;
+  if (isEnabled) {
+    const widgetOnly = document.getElementById('chkAutoStartWidgetOnly').checked;
+    await api.setAutoStart(true, widgetOnly);
+  }
+};
+
+async function loadAutoStartStatus() {
+  const chkMac = document.getElementById('chkAutoStartMac');
+  const chkWidget = document.getElementById('chkAutoStartWidgetOnly');
+  if (!chkMac) return;
+
+  try {
+    const status = await api.getAutoStart();
+    chkMac.checked = !!status.enabled;
+    if (chkWidget) chkWidget.checked = status.widgetOnly !== false;
+  } catch (err) {
+    console.error('Error loading autostart status:', err);
+  }
 }
 
 window.toggleStartup = async (filePath, val, requiresAdmin) => {
@@ -929,5 +981,30 @@ function onPageNavigated(page) {
 
 // Init
 loadSystemData();
-setInterval(updateSensors, 1000);
+
+const btnOpenWidget = document.getElementById('btnOpenWidget');
+if (btnOpenWidget) {
+  btnOpenWidget.addEventListener('click', () => window.openDesktopWidget());
+}
+
+// Background Power-Saving Throttling:
+// When the app is minimized or hidden in the background, poll at 6000ms instead of 1000ms.
+// When active in foreground, poll every 1000ms with instant refresh.
+let pollIntervalId = null;
+
+function setTelemetryInterval(ms) {
+  if (pollIntervalId) clearInterval(pollIntervalId);
+  pollIntervalId = setInterval(updateSensors, ms);
+}
+
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    setTelemetryInterval(6000); // 6s in background = near 0% CPU
+  } else {
+    setTelemetryInterval(1000); // 1s when actively looking
+    updateSensors();
+  }
+});
+
+setTelemetryInterval(1000);
 updateSensors();

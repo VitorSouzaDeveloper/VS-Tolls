@@ -9,6 +9,17 @@ function runCmd(cmd, timeout = 1500) {
   }
 }
 
+const memCache = {};
+function getCachedCmd(key, ttlMs, cmd) {
+  const now = Date.now();
+  if (memCache[key] && (now - memCache[key].time < ttlMs)) {
+    return memCache[key].val;
+  }
+  const val = runCmd(cmd);
+  memCache[key] = { time: now, val };
+  return val;
+}
+
 let lastCpuTimes = null;
 let lastDiskStats = null;
 let lastTimestamp = Date.now();
@@ -64,8 +75,8 @@ function getMemoryUsage() {
   const totalGb = (total / (1024 * 1024 * 1024)).toFixed(1);
   const pct = Math.round((used / total) * 100);
 
-  // Swap usage
-  const swapRaw = runCmd('sysctl -n vm.swapusage');
+  // Swap usage (cached 6s)
+  const swapRaw = getCachedCmd('sysctl_swap', 6000, 'sysctl -n vm.swapusage');
   let swapUsedMb = 0;
   let swapTotalMb = 0;
   if (swapRaw) {
@@ -75,8 +86,8 @@ function getMemoryUsage() {
     if (matchTotal) swapTotalMb = parseFloat(matchTotal[1]);
   }
 
-  // Exact macOS Activity Monitor Memory Breakdown
-  const vmStat = runCmd('vm_stat');
+  // Exact macOS Activity Monitor Memory Breakdown (cached 3s)
+  const vmStat = getCachedCmd('vm_stat', 3000, 'vm_stat');
   let pageSize = 16384;
   const stats = {};
   if (vmStat) {
@@ -114,8 +125,8 @@ function getMemoryUsage() {
   const effectiveFreeGb = Math.max(0, (total - realUsedBytes) / (1024 * 1024 * 1024)).toFixed(1);
   const realUsedPercent = Math.min(100, Math.round((realUsedBytes / total) * 100));
 
-  // Memory Pressure level (1 = Normal/Verde, 2 = Alerta/Amarelo, 4 = Crítica/Vermelho)
-  const pressureLevelRaw = runCmd('sysctl -n kern.memorystatus_vm_pressure_level');
+  // Memory Pressure level (cached 5s)
+  const pressureLevelRaw = getCachedCmd('vm_pressure', 5000, 'sysctl -n kern.memorystatus_vm_pressure_level');
   let pressureStatus = 'Normal (Verde)';
   let pressureColor = '#10b981';
   if (pressureLevelRaw === '2') {
@@ -144,7 +155,8 @@ function getMemoryUsage() {
 }
 
 function getBatteryAndPower() {
-  const battRaw = runCmd('pmset -g batt');
+  // Dynamic battery state (cached 4s)
+  const battRaw = getCachedCmd('pmset_batt', 4000, 'pmset -g batt');
   let percent = 100;
   let state = 'Desconhecido';
   let isCharging = false;
@@ -171,8 +183,8 @@ function getBatteryAndPower() {
     if (matchTime) timeLeft = matchTime[1];
   }
 
-  // Raw battery stats
-  const ioregRaw = runCmd('ioreg -r -c AppleSmartBattery');
+  // Raw battery stats: cycles, max capacity, design capacity (cached 60s)
+  const ioregRaw = getCachedCmd('ioreg_batt', 60000, 'ioreg -r -c AppleSmartBattery');
   let cycleCount = 0;
   let maxCapacityPct = 86;
   let voltageMv = 11500;
@@ -205,8 +217,8 @@ function getBatteryAndPower() {
     }
   }
 
-  // Custom PM settings
-  const customPm = runCmd('pmset -g custom');
+  // Custom PM settings (cached 30s)
+  const customPm = getCachedCmd('pmset_custom', 30000, 'pmset -g custom');
   let lowPowerMode = 'Desativado';
   let displaySleepMin = '10 min';
   let diskSleepMin = '10 min';
@@ -243,7 +255,8 @@ function getBatteryAndPower() {
 }
 
 function getThermalState() {
-  const thermRaw = runCmd('pmset -g therm');
+  // Thermal state (cached 10s)
+  const thermRaw = getCachedCmd('pmset_therm', 10000, 'pmset -g therm');
   let cpuWarning = 'Normal (0)';
   let gpuWarning = 'Normal (0)';
   let throttled = false;

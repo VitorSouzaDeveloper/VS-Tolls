@@ -33,6 +33,9 @@ echo "✓ Dependências prontas!"
 if [ "$1" == "--web" ]; then
     echo "🌐 Iniciando no modo Servidor Web..."
     node mac/server.js
+elif [ "$1" == "--widget" ]; then
+    echo "🪟 Iniciando Mini-Widget de Mesa do VS Tolls..."
+    npx electron mac/main.js --widget-only
 else
     echo "💻 Abrindo janela nativa do macOS com Electron..."
     npx electron mac/main.js

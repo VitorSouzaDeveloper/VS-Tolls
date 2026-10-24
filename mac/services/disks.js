@@ -17,7 +17,15 @@ function runCmdJson(cmd, timeout = 3000) {
   }
 }
 
+let cachedDisks = null;
+let cachedDisksTime = 0;
+
 function getDisksHealth() {
+  const now = Date.now();
+  if (cachedDisks && (now - cachedDisksTime < 25000)) {
+    return cachedDisks;
+  }
+
   // Read root disk info via diskutil + plutil
   const rootDiskJson = runCmdJson('diskutil info -plist / | plutil -convert json -o - -');
   const diskListJson = runCmdJson('diskutil list -plist | plutil -convert json -o - -');
@@ -119,6 +127,8 @@ function getDisksHealth() {
     }
   }
 
+  cachedDisks = disks;
+  cachedDisksTime = now;
   return disks;
 }
 

@@ -14,6 +14,7 @@ const { getStartupItems, toggleStartupItem, removeStartupItem, restoreStartupIte
 const { getInstalledStatus, installApp } = require('./services/appInstaller');
 const { scanSerialPorts, releaseLockedPort } = require('./services/maker');
 const { exportReportToFile } = require('./services/reportBuilder');
+const { getAutoStartStatus, setAutoStart } = require('./services/autostart');
 
 function createServer(port = 3000) {
   const app = express();
@@ -77,6 +78,16 @@ function createServer(port = 3000) {
     const { file: f } = req.query;
     res.json(restoreStartupItem(f));
   });
+
+  // Autostart (Start at Login)
+  app.get('/api/autostart/status', (req, res) => res.json(getAutoStartStatus()));
+  app.get('/api/autostart/toggle', (req, res) => {
+    const { enable, widgetOnly } = req.query;
+    res.json(setAutoStart(enable === 'true', widgetOnly === 'true'));
+  });
+
+  // Desktop Widget
+  app.get('/api/widget/status', (req, res) => res.json({ available: true, path: '/widget.html' }));
 
   // Apps Installer
   app.get('/api/apps', (req, res) => res.json(getInstalledStatus()));

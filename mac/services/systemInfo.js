@@ -18,7 +18,24 @@ function runCmdJson(cmd, timeout = 4000) {
   }
 }
 
+let staticSystemInfo = null;
+
 function getSystemInfo() {
+  const now = Date.now();
+  if (staticSystemInfo && (now - staticSystemInfo._cachedAt < 300000)) {
+    return {
+      ...staticSystemInfo.data,
+      os: {
+        ...staticSystemInfo.data.os,
+        uptime: os.uptime()
+      },
+      memory: {
+        ...staticSystemInfo.data.memory,
+        freeGb: (os.freemem() / (1024 * 1024 * 1024)).toFixed(1)
+      }
+    };
+  }
+
   const cpus = os.cpus();
   const cpuModel = runCmd('sysctl -n machdep.cpu.brand_string') || (cpus[0] ? cpus[0].model : 'Apple Silicon');
   const arch = os.arch();
@@ -90,7 +107,7 @@ function getSystemInfo() {
     device: (s.physical_drive && s.physical_drive.device_name) ? s.physical_drive.device_name : 'Apple SSD'
   })) : [];
 
-  return {
+  const result = {
     os: {
       name: osType,
       version: osVer,
@@ -140,6 +157,13 @@ function getSystemInfo() {
     },
     storage: storageList
   };
+
+  staticSystemInfo = {
+    _cachedAt: now,
+    data: result
+  };
+
+  return result;
 }
 
 module.exports = {
