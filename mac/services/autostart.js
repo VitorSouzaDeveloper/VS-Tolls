@@ -6,6 +6,20 @@ const LAUNCH_AGENTS_DIR = path.join(os.homedir(), 'Library', 'LaunchAgents');
 const PLIST_PATH = path.join(LAUNCH_AGENTS_DIR, 'com.vstolls.launcher.plist');
 const RUN_SCRIPT_PATH = path.join(__dirname, '..', '..', 'run-mac.sh');
 
+function getAppTarget() {
+  // Check if running from packaged .app
+  if (process.execPath && process.execPath.includes('.app')) {
+    return { isApp: true, exec: process.execPath };
+  }
+  // Check if VS Tolls is installed in /Applications
+  const installedApp = '/Applications/VS Tolls.app/Contents/MacOS/VS Tolls';
+  if (fs.existsSync(installedApp)) {
+    return { isApp: true, exec: installedApp };
+  }
+  // Otherwise dev script
+  return { isApp: false, exec: RUN_SCRIPT_PATH };
+}
+
 function getAutoStartStatus() {
   try {
     const exists = fs.existsSync(PLIST_PATH);
@@ -37,7 +51,16 @@ function setAutoStart(enable, widgetOnly = true) {
       fs.mkdirSync(LAUNCH_AGENTS_DIR, { recursive: true });
     }
 
-    const scriptArg = widgetOnly ? '<string>--widget</string>' : '';
+    const target = getAppTarget();
+    let programArgsXml = '';
+    if (target.isApp) {
+      const arg = widgetOnly ? '<string>--widget-only</string>' : '';
+      programArgsXml = `    <string>${target.exec}</string>\n    ${arg}`;
+    } else {
+      const arg = widgetOnly ? '<string>--widget</string>' : '';
+      programArgsXml = `    <string>/bin/bash</string>\n    <string>${target.exec}</string>\n    ${arg}`;
+    }
+
     const plistXml = `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -46,9 +69,7 @@ function setAutoStart(enable, widgetOnly = true) {
   <string>com.vstolls.launcher</string>
   <key>ProgramArguments</key>
   <array>
-    <string>/bin/bash</string>
-    <string>${RUN_SCRIPT_PATH}</string>
-    ${scriptArg}
+${programArgsXml}
   </array>
   <key>RunAtLoad</key>
   <true/>

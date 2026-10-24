@@ -21,5 +21,7 @@ ResetExplode-dist/
 
 # Node / macOS
 node_modules/
+dist/
+*.dmg
 .playwright-mcp/
 .DS_Store

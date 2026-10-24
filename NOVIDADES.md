@@ -18,5 +18,10 @@
 - **Otimização Extrema de CPU e RAM para Ficar Sempre Aberto**:
   - Caching inteligente em memória de comandos pesados do sistema (`system_profiler`, `diskutil`, `ioreg`, `pmset`, `vm_stat`, `sysctl`). Tempo de resposta caiu de centenas de milissegundos para **0.02ms**.
   - Redução dinâmica de taxa de atualização (throttling): reduz polling para 6 segundos quando o aplicativo ou widget estiver minimizado ou em segundo plano, caindo para **0.0% de uso de CPU**.
-  - Redesenho de gráficos Canvas condicional: o gráfico histórico só consome ciclos de GPU quando a aba Visão Geral estiver ativamente visível.
+- **Build de Produção Nativo (`.app` e `.dmg`)**:
+  - Configurado empacotamento profissional com `electron-builder`.
+  - Ícone nativo do macOS em alta resolução (`app.icns` gerado com squircle Apple a 1024x1024).
+  - Gera o executável nativo **`VS Tolls.app`** para a pasta `/Applications` e o instalador arrastável **`VS Tolls-1.0.0-arm64.dmg`** para distribuição.
+  - Scripts disponíveis: `npm run build:mac` (compila App + DMG Apple Silicon), `npm run build:mac:dir` (apenas pasta .app) e `npm run build:mac:all` (Universal Apple Silicon + Intel).
+
 

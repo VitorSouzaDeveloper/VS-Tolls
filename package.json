@@ -6,7 +6,53 @@
   "scripts": {
     "start": "electron mac/main.js",
     "web": "node mac/server.js",
-    "mac": "./run-mac.sh"
+    "mac": "./run-mac.sh",
+    "build:mac": "electron-builder --mac --arm64",
+    "build:mac:dir": "electron-builder --mac --arm64 --dir",
+    "build:mac:all": "electron-builder --mac --arm64 --x64"
+  },
+  "build": {
+    "appId": "com.vstolls.app",
+    "productName": "VS Tolls",
+    "copyright": "Copyright © 2026 Vitor Souza",
+    "mac": {
+      "category": "public.app-category.utilities",
+      "icon": "mac/assets/app.icns",
+      "target": [
+        "dir",
+        "dmg"
+      ],
+      "hardenedRuntime": false,
+      "gatekeeperAssess": false,
+      "identity": null
+    },
+    "dmg": {
+      "title": "VS Tolls ${version}",
+      "icon": "mac/assets/app.icns",
+      "contents": [
+        {
+          "x": 130,
+          "y": 220
+        },
+        {
+          "x": 410,
+          "y": 220,
+          "type": "link",
+          "path": "/Applications"
+        }
+      ],
+      "window": {
+        "width": 540,
+        "height": 380
+      }
+    },
+    "files": [
+      "mac/**/*",
+      "package.json"
+    ],
+    "directories": {
+      "output": "dist"
+    }
   },
   "repository": {
     "type": "git",
@@ -29,6 +75,7 @@
     "ws": "^8.18.0"
   },
   "devDependencies": {
-    "electron": "^33.2.1"
+    "electron": "^33.2.1",
+    "electron-builder": "^26.18.0"
   }
 }
