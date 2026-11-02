@@ -31,7 +31,19 @@ const api = window.vsTollsAPI || {
   toggleWidgetFloating: () => (window.vsTollsAPI && window.vsTollsAPI.toggleWidgetFloating) ? window.vsTollsAPI.toggleWidgetFloating() : fetch('/api/widget/floating').then(r => r.json()),
   getWidgetsStatus: () => (window.vsTollsAPI && window.vsTollsAPI.getWidgetsStatus) ? window.vsTollsAPI.getWidgetsStatus() : fetch('/api/widget/status').then(r => r.json()),
   getAutoStart: () => (window.vsTollsAPI && window.vsTollsAPI.getAutoStart) ? window.vsTollsAPI.getAutoStart() : fetch('/api/autostart/status').then(r => r.json()),
-  setAutoStart: (enable, widgetOnly) => (window.vsTollsAPI && window.vsTollsAPI.setAutoStart) ? window.vsTollsAPI.setAutoStart(enable, widgetOnly) : fetch(`/api/autostart/toggle?enable=${enable}&widgetOnly=${widgetOnly}`).then(r => r.json())
+  setAutoStart: (enable, widgetOnly) => (window.vsTollsAPI && window.vsTollsAPI.setAutoStart) ? window.vsTollsAPI.setAutoStart(enable, widgetOnly) : fetch(`/api/autostart/toggle?enable=${enable}&widgetOnly=${widgetOnly}`).then(r => r.json()),
+  transferGetStatus: () => (window.vsTollsAPI && window.vsTollsAPI.transferGetStatus) ? window.vsTollsAPI.transferGetStatus() : fetch('/api/transfer/status').then(r => r.json()),
+  transferSelectFiles: () => (window.vsTollsAPI && window.vsTollsAPI.transferSelectFiles) ? window.vsTollsAPI.transferSelectFiles() : null,
+  transferSelectFolder: () => (window.vsTollsAPI && window.vsTollsAPI.transferSelectFolder) ? window.vsTollsAPI.transferSelectFolder() : null,
+  transferOpenFolder: (p) => (window.vsTollsAPI && window.vsTollsAPI.transferOpenFolder) ? window.vsTollsAPI.transferOpenFolder(p) : fetch('/api/transfer/folder').then(r => r.json()),
+  transferShowItem: (p) => (window.vsTollsAPI && window.vsTollsAPI.transferShowItem) ? window.vsTollsAPI.transferShowItem(p) : null,
+  transferOpenFile: (p) => (window.vsTollsAPI && window.vsTollsAPI.transferOpenFile) ? window.vsTollsAPI.transferOpenFile(p) : null,
+  transferAddFiles: (paths) => (window.vsTollsAPI && window.vsTollsAPI.transferAddFiles) ? window.vsTollsAPI.transferAddFiles(paths) : null,
+  transferRemoveOutgoing: (id) => (window.vsTollsAPI && window.vsTollsAPI.transferRemoveOutgoing) ? window.vsTollsAPI.transferRemoveOutgoing(id) : fetch('/api/transfer/outgoing/' + id, { method: 'DELETE' }).then(r => r.json()),
+  transferClearOutgoing: () => (window.vsTollsAPI && window.vsTollsAPI.transferClearOutgoing) ? window.vsTollsAPI.transferClearOutgoing() : fetch('/api/transfer/outgoing', { method: 'DELETE' }).then(r => r.json()),
+  transferClearReceived: () => (window.vsTollsAPI && window.vsTollsAPI.transferClearReceived) ? window.vsTollsAPI.transferClearReceived() : fetch('/api/transfer/received', { method: 'DELETE' }).then(r => r.json()),
+  transferSendText: (text) => (window.vsTollsAPI && window.vsTollsAPI.transferSendText) ? window.vsTollsAPI.transferSendText(text) : fetch('/api/transfer/text', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text, from: 'MacBook' }) }).then(r => r.json()),
+  transferSetFolder: (p) => (window.vsTollsAPI && window.vsTollsAPI.transferSetFolder) ? window.vsTollsAPI.transferSetFolder(p) : fetch('/api/transfer/folder', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ path: p }) }).then(r => r.json())
 };
 
 // Global state
@@ -974,7 +986,8 @@ document.getElementById('btnExportReport').addEventListener('click', () => expor
 
 // Page navigation hook
 function onPageNavigated(page) {
-  if (page === 'widgets') refreshWidgetsGalleryUI();
+  if (page === 'transfer') loadTransferUI();
+  else if (page === 'widgets') refreshWidgetsGalleryUI();
   else if (page === 'optimize') loadTweaks();
   else if (page === 'startup') loadStartupItems();
   else if (page === 'energy') { if (sensorData) renderEnergyPage(sensorData); }
@@ -1090,3 +1103,558 @@ document.addEventListener('visibilitychange', () => {
 
 setTelemetryInterval(1000);
 updateSensors();
+
+// ==========================================================================
+// 16. VS DROP — File Transfer Mac <-> Mobile (iPhone / Android) Controller
+// ==========================================================================
+function formatBytes(bytes) {
+  if (!bytes || bytes === 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+}
+
+function escapeHtml(text) {
+  if (!text) return '';
+  return text.toString()
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+function getFileIcon(fileName) {
+  if (!fileName) return '📄';
+  const ext = fileName.split('.').pop().toLowerCase();
+  if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'heic', 'svg', 'bmp'].includes(ext)) return '🖼️';
+  if (['mov', 'mp4', 'm4v', 'mkv', 'avi', 'webm'].includes(ext)) return '🎬';
+  if (['mp3', 'm4a', 'wav', 'flac', 'aac', 'ogg'].includes(ext)) return '🎵';
+  if (['zip', 'rar', '7z', 'tar', 'gz', 'bz2'].includes(ext)) return '📦';
+  if (['pdf'].includes(ext)) return '📕';
+  if (['dmg', 'pkg', 'app', 'apk', 'exe'].includes(ext)) return '💾';
+  if (['txt', 'md', 'json', 'csv', 'log'].includes(ext)) return '📝';
+  return '📄';
+}
+
+function isUrl(str) {
+  return /^https?:\/\//i.test(str);
+}
+
+function formatFolderPath(p) {
+  if (!p) return '~/Downloads/VS-Drop';
+  return p.replace(/^\/Users\/[^\/]+/, '~');
+}
+
+let transferState = {
+  url: '',
+  qrCode: '',
+  destinationFolder: '',
+  connectedDevices: [],
+  outgoingFiles: [],
+  receivedFiles: [],
+  recentTexts: []
+};
+let transferDesktopWs = null;
+
+function addReceivedFile(file) {
+  if (!file) return;
+  const exists = transferState.receivedFiles.some(f => 
+    (f.id && file.id && f.id === file.id) || 
+    (f.name === file.name && f.size === file.size && Math.abs((f.receivedAt || 0) - (file.receivedAt || 0)) < 10000)
+  );
+  if (exists) return; // Prevent duplicate entries!
+
+  transferState.receivedFiles.unshift(file);
+  if (transferState.receivedFiles.length > 50) transferState.receivedFiles.pop();
+  renderReceivedFilesList(transferState.receivedFiles);
+}
+
+function addSharedTextMessage(msg) {
+  if (!msg || !msg.text) return;
+  const exists = transferState.recentTexts.some(t => 
+    (t.id && msg.id && t.id === msg.id) || 
+    (t.text === msg.text && Math.abs((t.timestamp || 0) - (msg.timestamp || 0)) < 5000)
+  );
+  if (exists) return; // Prevent duplicate entries!
+
+  transferState.recentTexts.unshift(msg);
+  if (transferState.recentTexts.length > 30) transferState.recentTexts.pop();
+  renderRecentTextsList(transferState.recentTexts);
+}
+
+async function loadTransferUI() {
+  try {
+    const status = await api.transferGetStatus();
+    if (!status) return;
+    transferState = { ...transferState, ...status };
+
+    const qrImg = document.getElementById('transferQrImg');
+    if (qrImg && status.qrCode) qrImg.src = status.qrCode;
+
+    const urlInput = document.getElementById('transferUrlInput');
+    if (urlInput && status.url) urlInput.value = status.url;
+
+    const folderDisplay = document.getElementById('transferFolderDisplay');
+    if (folderDisplay && status.destinationFolder) {
+      folderDisplay.innerText = formatFolderPath(status.destinationFolder);
+      folderDisplay.title = status.destinationFolder;
+    }
+
+    renderTransferDevices(status.connectedDevices || []);
+    renderOutgoingFilesList(status.outgoingFiles || []);
+    renderReceivedFilesList(status.receivedFiles || []);
+    renderRecentTextsList(status.recentTexts || []);
+
+    connectDesktopTransferWs();
+  } catch (err) {
+    console.error('Error loading transfer UI:', err);
+  }
+}
+
+function connectDesktopTransferWs() {
+  if (transferDesktopWs && transferDesktopWs.readyState === WebSocket.OPEN) return;
+
+  const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const host = location.host || 'localhost:3000';
+  const wsUrl = `${protocol}//${host}/ws/transfer?role=mac&device=MacBook%20Pro`;
+
+  try {
+    transferDesktopWs = new WebSocket(wsUrl);
+
+    transferDesktopWs.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        handleTransferWsEvent(data);
+      } catch (e) {}
+    };
+
+    transferDesktopWs.onclose = () => {
+      transferDesktopWs = null;
+      setTimeout(connectDesktopTransferWs, 5000);
+    };
+
+    transferDesktopWs.onerror = () => {
+      transferDesktopWs = null;
+    };
+  } catch (e) {}
+}
+
+function handleTransferWsEvent(data) {
+  if (data.type === 'init_status') {
+    if (data.destinationFolder) {
+      const folderDisplay = document.getElementById('transferFolderDisplay');
+      if (folderDisplay) {
+        folderDisplay.innerText = formatFolderPath(data.destinationFolder);
+        folderDisplay.title = data.destinationFolder;
+      }
+    }
+    renderTransferDevices(data.devices || []);
+    renderOutgoingFilesList(data.outgoingFiles || []);
+    renderReceivedFilesList(data.receivedFiles || []);
+    renderRecentTextsList(data.recentTexts || []);
+  } else if (data.type === 'devices_updated') {
+    renderTransferDevices(data.devices || []);
+  } else if (data.type === 'outgoing_files_updated') {
+    renderOutgoingFilesList(data.files || []);
+  } else if (data.type === 'upload_started') {
+    showIncomingMonitor(data.filename, data.totalBytes, data.sender);
+  } else if (data.type === 'upload_progress') {
+    updateIncomingMonitor(data);
+  } else if (data.type === 'upload_completed') {
+    hideIncomingMonitor();
+    if (data.file) {
+      addReceivedFile(data.file);
+    }
+  } else if (data.type === 'upload_aborted' || data.type === 'upload_error') {
+    hideIncomingMonitor();
+  } else if (data.type === 'text_shared') {
+    if (data.message) {
+      addSharedTextMessage(data.message);
+    }
+  } else if (data.type === 'folder_updated') {
+    const folderDisplay = document.getElementById('transferFolderDisplay');
+    if (folderDisplay && data.destinationFolder) {
+      folderDisplay.innerText = formatFolderPath(data.destinationFolder);
+      folderDisplay.title = data.destinationFolder;
+    }
+  }
+}
+
+function renderTransferDevices(devices) {
+  const container = document.getElementById('transferDevicesList');
+  const countBadge = document.getElementById('transferClientCountBadge');
+  const statusBadge = document.getElementById('transferDeviceStatusBadge');
+  if (!container) return;
+
+  const mobileDevices = devices.filter(d => d.role === 'mobile');
+
+  if (mobileDevices.length === 0) {
+    container.innerHTML = '<div style="font-size:11.5px; color:var(--text-muted);">Nenhum celular conectado no momento. Aponte a câmera para o QR Code.</div>';
+    if (countBadge) countBadge.style.display = 'none';
+    if (statusBadge) {
+      statusBadge.className = 'badge-status-neutral';
+      statusBadge.innerText = 'Aguardando celular...';
+    }
+    return;
+  }
+
+  if (countBadge) {
+    countBadge.style.display = 'inline-block';
+    countBadge.innerText = `${mobileDevices.length} Conectado${mobileDevices.length > 1 ? 's' : ''}`;
+  }
+
+  if (statusBadge) {
+    statusBadge.className = 'badge-status-good';
+    statusBadge.innerText = `🟢 ${mobileDevices[0].deviceName}`;
+  }
+
+  container.innerHTML = mobileDevices.map(d => `
+    <div class="transfer-device-chip">
+      <span style="width:6px; height:6px; border-radius:50%; background:currentColor; box-shadow:0 0 6px currentColor;"></span>
+      <span>${escapeHtml(d.deviceName)}</span>
+      <span style="font-size:10px; opacity:0.7;">(${escapeHtml(d.ip)})</span>
+    </div>
+  `).join('');
+}
+
+function renderOutgoingFilesList(files) {
+  const container = document.getElementById('transferOutgoingList');
+  const countSpan = document.getElementById('outgoingFilesCount');
+  if (countSpan) countSpan.innerText = files.length;
+  if (!container) return;
+
+  if (!files || files.length === 0) {
+    container.innerHTML = '<div class="transfer-empty-msg">Nenhum arquivo na fila de envio. Arraste arquivos acima.</div>';
+    return;
+  }
+
+  container.innerHTML = files.map(f => `
+    <div class="transfer-file-row">
+      <div class="transfer-file-info">
+        <span style="font-size:16px;">📄</span>
+        <div style="overflow:hidden;">
+          <div class="transfer-file-name" title="${escapeHtml(f.name)}">${escapeHtml(f.name)}</div>
+          <div class="transfer-file-meta">${formatBytes(f.size)} · ${f.downloadCount > 0 ? f.downloadCount + ' baixado(s)' : 'Disponível'}</div>
+        </div>
+      </div>
+      <button class="btn-action-sm" onclick="removeOutgoingFileAction('${f.id}')" title="Remover da fila">Remover</button>
+    </div>
+  `).join('');
+}
+
+window.removeOutgoingFileAction = async (id) => {
+  await api.transferRemoveOutgoing(id);
+};
+
+function renderReceivedFilesList(files) {
+  const container = document.getElementById('transferReceivedList');
+  const countSpan = document.getElementById('receivedFilesCount');
+  
+  // Deduplicate files by id or name+size within 10s
+  const uniqueFiles = [];
+  const seenIds = new Set();
+  const seenFileKeys = new Set();
+  for (const f of (files || [])) {
+    if (!f) continue;
+    if (f.id && seenIds.has(f.id)) continue;
+    if (f.id) seenIds.add(f.id);
+
+    const fileKey = `${f.name}_${f.size}_${Math.floor((f.receivedAt || 0) / 10000)}`;
+    if (seenFileKeys.has(fileKey)) continue;
+    seenFileKeys.add(fileKey);
+
+    uniqueFiles.push(f);
+  }
+  transferState.receivedFiles = uniqueFiles;
+  if (countSpan) countSpan.innerText = uniqueFiles.length;
+  if (!container) return;
+
+  if (uniqueFiles.length === 0) {
+    container.innerHTML = '<div class="transfer-empty-msg">Nenhum arquivo recebido nesta sessão.</div>';
+    return;
+  }
+
+  container.innerHTML = uniqueFiles.map(f => `
+    <div class="transfer-file-row">
+      <div class="transfer-file-info">
+        <span style="font-size:16px;">${getFileIcon(f.name)}</span>
+        <div style="overflow:hidden;">
+          <div class="transfer-file-name" title="${escapeHtml(f.name)}">${escapeHtml(f.name)}</div>
+          <div class="transfer-file-meta">${formatBytes(f.size)} · De: ${escapeHtml(f.sender || 'Celular')}</div>
+        </div>
+      </div>
+      <div style="display:flex; gap:6px;">
+        <button class="btn-action-sm btn-finder-action" data-file-id="${escapeHtml(f.id)}">📂 Finder</button>
+        <button class="btn-action-sm btn-open-action" data-file-id="${escapeHtml(f.id)}">Abrir</button>
+      </div>
+    </div>
+  `).join('');
+
+  container.querySelectorAll('.btn-finder-action').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.getAttribute('data-file-id');
+      const item = uniqueFiles.find(x => x.id === id);
+      if (item && item.path) {
+        if (api.transferShowItem) api.transferShowItem(item.path);
+        else api.transferOpenFolder();
+      } else {
+        api.transferOpenFolder();
+      }
+    });
+  });
+
+  container.querySelectorAll('.btn-open-action').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.getAttribute('data-file-id');
+      const item = uniqueFiles.find(x => x.id === id);
+      if (item && item.path && api.transferOpenFile) {
+        api.transferOpenFile(item.path);
+      }
+    });
+  });
+}
+
+function renderRecentTextsList(texts) {
+  const container = document.getElementById('transferRecentTexts');
+  if (!container) return;
+
+  // Deduplicate texts by id or text content within 5 seconds
+  const uniqueTexts = [];
+  const seenIds = new Set();
+  const seenContent = new Set();
+  for (const t of (texts || [])) {
+    if (!t || !t.text) continue;
+    if (t.id && seenIds.has(t.id)) continue;
+    if (t.id) seenIds.add(t.id);
+
+    const contentKey = `${t.text}_${Math.floor((t.timestamp || 0) / 5000)}`;
+    if (seenContent.has(contentKey)) continue;
+    seenContent.add(contentKey);
+
+    uniqueTexts.push(t);
+  }
+  transferState.recentTexts = uniqueTexts;
+
+  if (uniqueTexts.length === 0) {
+    container.innerHTML = '<div style="font-size:11px; color:var(--text-sub);">Nenhum texto compartilhado ainda.</div>';
+    return;
+  }
+
+  container.innerHTML = uniqueTexts.map(t => `
+    <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.03); border:1px solid var(--border-color); border-radius:6px; padding:4px 8px; font-size:11.5px; gap:8px;">
+      <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1;" title="${escapeHtml(t.text)}">${isUrl(t.text) ? `<a href="${escapeHtml(t.text)}" target="_blank" style="color:var(--accent-blue); text-decoration:none;">${escapeHtml(t.text)}</a>` : escapeHtml(t.text)}</span>
+      <button class="btn-action-sm btn-copy-shared-text" data-text-id="${escapeHtml(t.id)}" style="padding:2px 8px; font-size:10px; flex-shrink:0;">Copiar</button>
+    </div>
+  `).join('');
+
+  container.querySelectorAll('.btn-copy-shared-text').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.getAttribute('data-text-id');
+      const item = uniqueTexts.find(x => x.id === id);
+      if (item && item.text && navigator.clipboard) {
+        navigator.clipboard.writeText(item.text).then(() => {
+          btn.innerText = '✅ Copiado!';
+          setTimeout(() => { btn.innerText = 'Copiar'; }, 1500);
+        });
+      }
+    });
+  });
+}
+
+function showIncomingMonitor(filename, totalBytes, sender) {
+  const box = document.getElementById('transferIncomingMonitor');
+  if (!box) return;
+  box.style.display = 'block';
+  document.getElementById('incomingFileName').innerText = `${filename} (${sender || 'Celular'})`;
+  document.getElementById('incomingProgressPct').innerText = '0%';
+  document.getElementById('incomingProgressBar').style.width = '0%';
+  document.getElementById('incomingSpeed').innerText = 'Iniciando...';
+  document.getElementById('incomingBytesText').innerText = `0 B / ${formatBytes(totalBytes)}`;
+}
+
+function updateIncomingMonitor(data) {
+  const box = document.getElementById('transferIncomingMonitor');
+  if (!box) return;
+  box.style.display = 'block';
+  document.getElementById('incomingFileName').innerText = data.filename;
+  document.getElementById('incomingProgressPct').innerText = `${data.percent}%`;
+  document.getElementById('incomingProgressBar').style.width = `${data.percent}%`;
+  document.getElementById('incomingSpeed').innerText = `${formatBytes(data.speed)}/s`;
+  document.getElementById('incomingBytesText').innerText = `${formatBytes(data.receivedBytes)} / ${formatBytes(data.totalBytes)}`;
+}
+
+function hideIncomingMonitor() {
+  const box = document.getElementById('transferIncomingMonitor');
+  if (box) box.style.display = 'none';
+}
+
+// Transfer DOM Event Listeners Setup
+function initTransferEvents() {
+  const dropzone = document.getElementById('macTransferDropzone');
+  const fileInput = document.getElementById('macTransferFileInput');
+  const btnSelectFiles = document.getElementById('btnTransferSelectFiles');
+  const btnClearOutgoing = document.getElementById('btnTransferClearOutgoing');
+  const btnClearReceived = document.getElementById('btnTransferClearReceived');
+  const btnOpenFolder = document.getElementById('btnTransferOpenFolder');
+  const btnSelectFolder = document.getElementById('btnTransferSelectFolder');
+  const btnOpenBrowser = document.getElementById('btnTransferOpenBrowser');
+  const btnCopyUrl = document.getElementById('btnTransferCopyUrl');
+  const btnRefreshQr = document.getElementById('btnTransferRefreshQr');
+  const btnSendText = document.getElementById('btnTransferSendText');
+  const textInput = document.getElementById('transferTextInput');
+
+  if (dropzone) {
+    ['dragenter', 'dragover'].forEach(evName => {
+      dropzone.addEventListener(evName, (e) => {
+        e.preventDefault();
+        dropzone.classList.add('drag-over');
+      });
+    });
+    ['dragleave', 'drop'].forEach(evName => {
+      dropzone.addEventListener(evName, (e) => {
+        e.preventDefault();
+        dropzone.classList.remove('drag-over');
+      });
+    });
+    dropzone.addEventListener('drop', async (e) => {
+      if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) {
+        const paths = [];
+        for (let i = 0; i < e.dataTransfer.files.length; i++) {
+          const f = e.dataTransfer.files[i];
+          if (f.path) paths.push(f.path);
+        }
+        if (paths.length > 0 && api.transferAddFiles) {
+          await api.transferAddFiles(paths);
+          await loadTransferUI();
+        }
+      }
+    });
+  }
+
+  if (btnSelectFiles) {
+    btnSelectFiles.addEventListener('click', async () => {
+      if (api.transferSelectFiles) {
+        await api.transferSelectFiles();
+        await loadTransferUI();
+      } else if (fileInput) {
+        fileInput.click();
+      }
+    });
+  }
+
+  if (fileInput) {
+    fileInput.addEventListener('change', async (e) => {
+      if (e.target.files && e.target.files.length) {
+        const paths = [];
+        for (let i = 0; i < e.target.files.length; i++) {
+          const f = e.target.files[i];
+          if (f.path) paths.push(f.path);
+        }
+        if (paths.length > 0 && api.transferAddFiles) {
+          await api.transferAddFiles(paths);
+          await loadTransferUI();
+        }
+      }
+    });
+  }
+
+  if (btnClearOutgoing) {
+    btnClearOutgoing.addEventListener('click', async () => {
+      await api.transferClearOutgoing();
+      await loadTransferUI();
+    });
+  }
+
+  if (btnClearReceived) {
+    btnClearReceived.addEventListener('click', async () => {
+      await api.transferClearReceived();
+      await loadTransferUI();
+    });
+  }
+
+  if (btnOpenFolder) {
+    btnOpenFolder.addEventListener('click', () => {
+      api.transferOpenFolder();
+    });
+  }
+
+  if (btnSelectFolder) {
+    btnSelectFolder.addEventListener('click', async () => {
+      if (api.transferSelectFolder) {
+        const res = await api.transferSelectFolder();
+        if (res && res.success && res.destinationFolder) {
+          document.getElementById('transferFolderDisplay').innerText = res.destinationFolder;
+        }
+      }
+    });
+  }
+
+  if (btnOpenBrowser) {
+    btnOpenBrowser.addEventListener('click', () => {
+      const url = document.getElementById('transferUrlInput').value || 'http://localhost:3000/drop';
+      window.open(url, '_blank');
+    });
+  }
+
+  if (btnCopyUrl) {
+    btnCopyUrl.addEventListener('click', () => {
+      const url = document.getElementById('transferUrlInput').value;
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(url).then(() => {
+          btnCopyUrl.innerText = '✅ Copiado!';
+          setTimeout(() => btnCopyUrl.innerText = '📋 Copiar', 2000);
+        });
+      }
+    });
+  }
+
+  if (btnRefreshQr) {
+    btnRefreshQr.addEventListener('click', () => {
+      loadTransferUI();
+    });
+  }
+
+  if (btnSendText && textInput) {
+    let isSendingText = false;
+    const send = async () => {
+      if (isSendingText) return;
+      const text = textInput.value.trim();
+      if (!text) return;
+      isSendingText = true;
+      textInput.value = '';
+      try {
+        await api.transferSendText(text);
+      } catch (err) {
+        console.error('Error sending text:', err);
+      } finally {
+        setTimeout(() => { isSendingText = false; }, 300);
+      }
+    };
+    btnSendText.addEventListener('click', (e) => {
+      e.preventDefault();
+      send();
+    });
+    textInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        send();
+      }
+    });
+  }
+}
+
+// Hook into Electron events if available
+if (window.vsTollsAPI && window.vsTollsAPI.onTransferFileReceived) {
+  window.vsTollsAPI.onTransferFileReceived((file) => {
+    addReceivedFile(file);
+  });
+}
+if (window.vsTollsAPI && window.vsTollsAPI.onTransferTextReceived) {
+  window.vsTollsAPI.onTransferTextReceived((msg) => {
+    addSharedTextMessage(msg);
+  });
+}
+
+initTransferEvents();

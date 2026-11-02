@@ -15,6 +15,7 @@ const { getInstalledStatus, installApp } = require('./services/appInstaller');
 const { scanSerialPorts, releaseLockedPort } = require('./services/maker');
 const { exportReportToFile } = require('./services/reportBuilder');
 const { getAutoStartStatus, setAutoStart } = require('./services/autostart');
+const { transferService } = require('./services/transferService');
 
 function createServer(port = 3000) {
   const app = express();
@@ -119,7 +120,35 @@ function createServer(port = 3000) {
     res.json(exportReportToFile(format));
   });
 
+  // VS Drop — File Transfer Mac <-> Mobile (iPhone / Android)
+  app.get('/drop', (req, res) => res.sendFile(path.join(__dirname, 'public', 'drop.html')));
+  app.get('/transfer', (req, res) => res.sendFile(path.join(__dirname, 'public', 'drop.html')));
+  app.get('/api/transfer/status', async (req, res) => res.json(await transferService.getStatus(port)));
+  app.post('/api/transfer/upload', (req, res) => transferService.handleIncomingUpload(req, res));
+  app.get('/api/transfer/download/:id', (req, res) => transferService.handleDownload(req, res, req.params.id));
+  app.post('/api/transfer/outgoing', (req, res) => {
+    const { path: p } = req.body || {};
+    res.json(transferService.addOutgoingFileFromPath(p));
+  });
+  app.delete('/api/transfer/outgoing/:id', (req, res) => res.json(transferService.removeOutgoingFile(req.params.id)));
+  app.delete('/api/transfer/outgoing', (req, res) => res.json(transferService.clearOutgoingFiles()));
+  app.get('/api/transfer/received', (req, res) => res.json(transferService.getReceivedFiles()));
+  app.delete('/api/transfer/received', (req, res) => res.json(transferService.clearReceivedFiles()));
+  app.post('/api/transfer/text', (req, res) => {
+    const { text, from } = req.body || {};
+    const msg = transferService.sendTextMessage(text, from || 'Web');
+    res.json({ success: !!msg, message: msg });
+  });
+  app.get('/api/transfer/folder', (req, res) => res.json({ destinationFolder: transferService.getDestinationFolder() }));
+  app.post('/api/transfer/folder', (req, res) => {
+    const { path: p } = req.body || {};
+    res.json(transferService.setDestinationFolder(p));
+  });
+
   const server = http.createServer(app);
+
+  // Attach WebSocket Server for real-time mobile <-> desktop communication
+  transferService.attachWebSocketServer(server);
 
   server.on('error', (err) => {
     if (err.code === 'EADDRINUSE') {

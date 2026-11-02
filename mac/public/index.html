@@ -106,6 +106,7 @@
           </div>
           <div class="nav-group-items" id="grp-tools">
             <button class="nav-subitem" data-page="widgets">Widgets de Mesa</button>
+            <button class="nav-subitem" data-page="transfer">Transferência Móvel</button>
             <button class="nav-subitem" data-page="optimize">Otimização (VS OTIMIZA)</button>
             <button class="nav-subitem" data-page="startup">Inicialização</button>
             <button class="nav-subitem" data-page="apps">Instalar Apps</button>
@@ -723,6 +724,8 @@
               </div>
             </div>
           </div>
+        </section>
+
         <!-- CENTRAL DE WIDGETS DE MESA -->
         <section id="page-widgets" class="view-page">
           <div class="page-title-row">
@@ -899,7 +902,153 @@
           </div>
         </section>
 
-        <!-- 17. INSTALAR APPS -->
+        <!-- 17. VS DROP — TRANSFERÊNCIA MÓVEL MAC <-> IPHONE / ANDROID -->
+        <section id="page-transfer" class="view-page">
+          <div class="page-title-row">
+            <div>
+              <h2>VS Drop — Transferência Mac ⇄ iPhone / Android</h2>
+              <div style="font-size:12px; color:var(--text-muted); margin-top:3px;">
+                Transferência ultrarrápida ponto a ponto via Wi-Fi local sem limites de tamanho, sem nuvem e sem compressão (estilo Blip / AirDrop).
+              </div>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:flex-end;">
+              <div class="transfer-folder-pill" title="Pasta de destino onde os arquivos são salvos">
+                <span style="color:var(--text-muted); font-size:11px;">Destino:</span>
+                <span id="transferFolderDisplay" style="font-family:var(--font-mono); font-size:11px; font-weight:600;">~/Downloads/VS-Drop</span>
+              </div>
+              <button id="btnTransferOpenFolder" class="btn-action-sm" title="Abrir pasta no Finder">
+                📂 Abrir no Finder
+              </button>
+              <button id="btnTransferSelectFolder" class="btn-action-sm" title="Escolher outra pasta para salvar os arquivos">
+                Alterar Pasta...
+              </button>
+              <button id="btnTransferOpenBrowser" class="btn-action-sm" title="Abrir interface web no navegador">
+                🌐 Abrir Web
+              </button>
+            </div>
+          </div>
+
+          <!-- Top Row: Connection & Pairing Card -->
+          <div class="two-col-grid" style="margin-bottom:16px;">
+            <!-- QR Code & Connection Card -->
+            <div class="card">
+              <div class="card-title-row" style="margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
+                <div class="card-title">1. Conectar iPhone ou Android</div>
+                <div id="transferDeviceStatusBadge" class="badge-status-neutral">Aguardando celular...</div>
+              </div>
+              <div style="display:flex; gap:16px; align-items:center;">
+                <div class="transfer-qr-box">
+                  <img id="transferQrImg" src="" alt="QR Code" style="width:120px; height:120px; border-radius:10px; display:block; background:#fff; padding:4px;">
+                </div>
+                <div style="flex:1; min-width:0;">
+                  <div style="font-size:13px; font-weight:600; color:var(--text-main); margin-bottom:4px;">
+                    Aponte a câmera do celular para o QR Code
+                  </div>
+                  <div style="font-size:11.5px; color:var(--text-muted); line-height:1.35; margin-bottom:10px;">
+                    Certifique-se de que o iPhone ou Android esteja conectado na mesma rede Wi-Fi que este Mac. Sem necessidade de instalar nenhum app!
+                  </div>
+                  <div style="display:flex; align-items:center; gap:6px; width:100%;">
+                    <input type="text" id="transferUrlInput" readonly class="transfer-url-input" value="http://127.0.0.1:3000/drop" title="Clique para selecionar tudo" onclick="this.select()">
+                    <button id="btnTransferCopyUrl" class="btn-action-sm" title="Copiar endereço" style="flex-shrink:0;">📋 Copiar</button>
+                    <button id="btnTransferRefreshQr" class="btn-action-sm" title="Atualizar IP / QR Code" style="flex-shrink:0; padding:4px 8px;">🔄</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Dispositivos Conectados & Clipboard -->
+            <div class="card">
+              <div class="card-title-row" style="margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
+                <div class="card-title">Dispositivos & Área de Transferência</div>
+                <div id="transferClientCountBadge" class="badge-status-good" style="display:none;">1 Conectado</div>
+              </div>
+              
+              <!-- Connected Devices Pill List -->
+              <div id="transferDevicesList" class="transfer-devices-container" style="margin-bottom:12px;">
+                <div style="font-size:11.5px; color:var(--text-muted);">Nenhum celular conectado no momento.</div>
+              </div>
+
+              <!-- Quick Text Share -->
+              <div style="border-top:1px solid var(--border-color); padding-top:10px;">
+                <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; margin-bottom:6px;">Compartilhar Texto ou Link Rápido</div>
+                <div style="display:flex; gap:8px;">
+                  <input type="text" id="transferTextInput" placeholder="Cole um link ou anotação para enviar ao celular..." class="transfer-url-input" style="flex:1;">
+                  <button id="btnTransferSendText" class="btn-action-sm">Enviar</button>
+                </div>
+                <div id="transferRecentTexts" style="margin-top:8px; max-height:80px; overflow-y:auto; display:flex; flex-direction:column; gap:4px;">
+                  <!-- Dynamic text snippets -->
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom Row: 2 Columns for Bidirectional Transfer -->
+          <div class="two-col-grid">
+            
+            <!-- Column 1: Mac -> Celular (Outgoing) -->
+            <div class="card">
+              <div class="card-title-row" style="margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
+                <div class="card-title">📤 Enviar para o Celular (Mac ➔ Mobile)</div>
+                <button id="btnTransferClearOutgoing" class="btn-action-sm">Limpar Fila</button>
+              </div>
+
+              <!-- Drag and drop zone -->
+              <div class="transfer-dropzone" id="macTransferDropzone">
+                <div style="font-size:32px; margin-bottom:6px;">📁</div>
+                <div style="font-size:13.5px; font-weight:600; margin-bottom:3px;">Arraste arquivos aqui do Finder</div>
+                <div style="font-size:11px; color:var(--text-muted); margin-bottom:10px;">Suporta múltiplos arquivos, fotos, vídeos 4K e zips sem limites de tamanho</div>
+                <button id="btnTransferSelectFiles" class="btn-action">Selecionar Arquivos no Mac</button>
+                <input type="file" id="macTransferFileInput" multiple style="display:none;">
+              </div>
+
+              <!-- Outgoing Files List -->
+              <div style="margin-top:12px;">
+                <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; margin-bottom:8px;">
+                  Arquivos Disponíveis para o Celular Baixar (<span id="outgoingFilesCount">0</span>)
+                </div>
+                <div id="transferOutgoingList" class="transfer-files-list">
+                  <div class="transfer-empty-msg">Nenhum arquivo na fila de envio.</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Column 2: Celular -> Mac (Incoming) -->
+            <div class="card">
+              <div class="card-title-row" style="margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
+                <div class="card-title">📥 Recebidos do Celular (Mobile ➔ Mac)</div>
+                <button id="btnTransferClearReceived" class="btn-action-sm">Limpar Histórico</button>
+              </div>
+
+              <!-- Live Incoming Transfer Monitor -->
+              <div id="transferIncomingMonitor" class="transfer-monitor-box" style="display:none;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                  <span id="incomingFileName" style="font-size:12.5px; font-weight:600; max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">arquivo.mov</span>
+                  <span id="incomingSpeed" style="font-size:11px; font-family:var(--font-mono); color:var(--accent-cyan); font-weight:600;">0 MB/s</span>
+                </div>
+                <div class="meter-bar" style="height:8px; margin-bottom:6px;">
+                  <div class="meter-fill" id="incomingProgressBar" style="width:0%; background:linear-gradient(90deg, var(--accent-cyan), var(--accent-green));"></div>
+                </div>
+                <div style="display:flex; justify-content:space-between; font-size:10.5px; color:var(--text-muted); font-family:var(--font-mono);">
+                  <span id="incomingProgressPct">0%</span>
+                  <span id="incomingBytesText">0 MB / 0 MB</span>
+                </div>
+              </div>
+
+              <!-- Received Files List -->
+              <div>
+                <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; margin-bottom:8px;">
+                  Arquivos Salvos no Mac (<span id="receivedFilesCount">0</span>)
+                </div>
+                <div id="transferReceivedList" class="transfer-files-list">
+                  <div class="transfer-empty-msg">Nenhum arquivo recebido nesta sessão.</div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+        <!-- 18. INSTALAR APPS -->
         <section id="page-apps" class="view-page">
           <div class="page-title-row">
             <h2>Instalar Apps Essenciais (Pós-Formatação)</h2>

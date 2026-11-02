@@ -35,5 +35,21 @@ contextBridge.exposeInMainWorld('vsTollsAPI', {
   onWidgetFloatingChange: (cb) => ipcRenderer.on('widget-floating-change', (e, data) => cb(data)),
   openMain: () => ipcRenderer.invoke('open-main'),
   getAutoStart: () => ipcRenderer.invoke('get-autostart-status'),
-  setAutoStart: (enable, widgetOnly) => ipcRenderer.invoke('set-autostart', enable, widgetOnly)
+  setAutoStart: (enable, widgetOnly) => ipcRenderer.invoke('set-autostart', enable, widgetOnly),
+
+  // VS Drop — File Transfer Mac <-> Mobile (iPhone / Android)
+  transferGetStatus: () => ipcRenderer.invoke('transfer-get-status'),
+  transferSelectFiles: () => ipcRenderer.invoke('transfer-select-files'),
+  transferSelectFolder: () => ipcRenderer.invoke('transfer-select-folder'),
+  transferOpenFolder: (folderPath) => ipcRenderer.invoke('transfer-open-folder', folderPath),
+  transferShowItem: (filePath) => ipcRenderer.invoke('transfer-show-item', filePath),
+  transferOpenFile: (filePath) => ipcRenderer.invoke('transfer-open-file', filePath),
+  transferAddFiles: (filePaths) => ipcRenderer.invoke('transfer-add-files', filePaths),
+  transferRemoveOutgoing: (id) => ipcRenderer.invoke('transfer-remove-outgoing', id),
+  transferClearOutgoing: () => ipcRenderer.invoke('transfer-clear-outgoing'),
+  transferClearReceived: () => ipcRenderer.invoke('transfer-clear-received'),
+  transferSendText: (text) => ipcRenderer.invoke('transfer-send-text', text),
+  transferSetFolder: (p) => ipcRenderer.invoke('transfer-set-folder', p),
+  onTransferFileReceived: (cb) => ipcRenderer.on('transfer-file-received', (e, data) => cb(data)),
+  onTransferTextReceived: (cb) => ipcRenderer.on('transfer-text-received', (e, data) => cb(data))
 });

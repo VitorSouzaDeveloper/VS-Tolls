@@ -19,6 +19,15 @@
     2. **Mini Barra de Status (Ultra Compacta)**: Barra horizontal fina de apenas 52px de altura para cantos de tela (340×52px).
     3. **MacBook Bateria & MagSafe**: Saúde percentual, potência do carregador em Watts, ciclos e autonomia (210×195px).
     4. **Memória RAM & Limpeza Rápida**: Detalhamento de RAM com botão interativo de **Purge** direto da mesa (230×195px).
+- **VS Drop — Transferência de Arquivos Mac ⇄ iPhone / Android (Estilo Blip / AirDrop)**:
+  - **Zero Instalação no Celular**: Basta abrir a câmera do iPhone ou Android e apontar para o QR Code gerado no VS Tolls para conectar instantaneamente.
+  - **Transferência Bidirecional Direta**:
+    - **Mac ➔ Celular**: Arraste qualquer foto, vídeo 4K, zip ou pasta no Mac e baixe no celular com 1 toque na velocidade máxima do Wi-Fi local.
+    - **Celular ➔ Mac**: Envie fotos da galeria, vídeos ou arquivos do celular diretamente para o seu Mac (`~/Downloads/VS-Drop`).
+  - **Sem Limites de Tamanho e Sem Compressão**: Arquivos mantidos na qualidade máxima original, transferidos via streaming HTTP/Socket local sem passar por servidores na nuvem.
+  - **Monitoramento em Tempo Real**: Progresso animado, velocidade em MB/s, tempo restante e notificações nativas do macOS no término do envio.
+  - **Área de Transferência & Links Rápidos**: Compartilhamento instantâneo de anotações, links e chaves Pix com botão de cópia com 1 toque.
+  - **Controle de Destino & Finder**: Botão direto para abrir a pasta de transferências no Finder ou escolher outro diretório do disco.
 - **Fixação na Mesa por Padrão + Atalho Global `Shift + \`**:
   - Por padrão, os widgets ficam **fixados na Mesa (wallpaper)**, atrás de todas as janelas abertas.
   - Ao pressionar **`Shift + \`** (ou `Cmd+Shift+\`), todos os widgets vêm instantaneamente para a frente no **Modo Flutuante** sobre todas as janelas para uma conferência rápida. Pressionando novamente, voltam a se fixar na Mesa.

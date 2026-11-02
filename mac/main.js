@@ -1,5 +1,6 @@
-const { app, BrowserWindow, ipcMain, globalShortcut } = require('electron');
+const { app, BrowserWindow, ipcMain, globalShortcut, shell, dialog, Notification } = require('electron');
 const path = require('path');
+const fs = require('fs');
 const { createServer } = require('./server');
 
 const { getSystemInfo } = require('./services/systemInfo');
@@ -15,6 +16,7 @@ const { getInstalledStatus, installApp } = require('./services/appInstaller');
 const { scanSerialPorts, releaseLockedPort } = require('./services/maker');
 const { exportReportToFile } = require('./services/reportBuilder');
 const { getAutoStartStatus, setAutoStart } = require('./services/autostart');
+const { transferService } = require('./services/transferService');
 
 let mainWindow = null;
 const activeWidgets = {};
@@ -228,6 +230,84 @@ ipcMain.handle('open-main', () => {
 });
 ipcMain.handle('get-autostart-status', () => getAutoStartStatus());
 ipcMain.handle('set-autostart', (e, enable, widgetOnly) => setAutoStart(enable, widgetOnly));
+
+// VS Drop — File Transfer Mac <-> Mobile (iPhone / Android) IPCs
+ipcMain.handle('transfer-get-status', () => transferService.getStatus(3000));
+ipcMain.handle('transfer-select-files', async () => {
+  if (!mainWindow || mainWindow.isDestroyed()) return [];
+  const res = await dialog.showOpenDialog(mainWindow, {
+    title: 'Selecionar Arquivos para Enviar ao Celular',
+    properties: ['openFile', 'multiSelections']
+  });
+  if (!res.canceled && res.filePaths && res.filePaths.length > 0) {
+    return transferService.addOutgoingFilesFromPaths(res.filePaths);
+  }
+  return [];
+});
+ipcMain.handle('transfer-select-folder', async () => {
+  if (!mainWindow || mainWindow.isDestroyed()) return { success: false };
+  const res = await dialog.showOpenDialog(mainWindow, {
+    title: 'Escolher Pasta para Salvar Arquivos Recebidos (VS Drop)',
+    properties: ['openDirectory', 'createDirectory']
+  });
+  if (!res.canceled && res.filePaths && res.filePaths.length > 0) {
+    return transferService.setDestinationFolder(res.filePaths[0]);
+  }
+  return { success: false, canceled: true };
+});
+ipcMain.handle('transfer-open-folder', (e, folderPath) => {
+  const target = folderPath || transferService.getDestinationFolder();
+  if (fs.existsSync(target)) {
+    shell.openPath(target);
+    return { success: true };
+  }
+  return { success: false, error: 'Pasta não encontrada' };
+});
+ipcMain.handle('transfer-show-item', (e, itemPath) => {
+  if (itemPath && fs.existsSync(itemPath)) {
+    shell.showItemInFolder(itemPath);
+    return { success: true };
+  }
+  return { success: false, error: 'Arquivo não encontrado no disco' };
+});
+ipcMain.handle('transfer-open-file', (e, itemPath) => {
+  if (itemPath && fs.existsSync(itemPath)) {
+    shell.openPath(itemPath);
+    return { success: true };
+  }
+  return { success: false, error: 'Arquivo não encontrado' };
+});
+ipcMain.handle('transfer-add-files', (e, filePaths) => transferService.addOutgoingFilesFromPaths(filePaths));
+ipcMain.handle('transfer-remove-outgoing', (e, id) => transferService.removeOutgoingFile(id));
+ipcMain.handle('transfer-clear-outgoing', () => transferService.clearOutgoingFiles());
+ipcMain.handle('transfer-clear-received', () => transferService.clearReceivedFiles());
+ipcMain.handle('transfer-send-text', (e, text) => transferService.sendTextMessage(text, 'MacBook'));
+ipcMain.handle('transfer-set-folder', (e, p) => transferService.setDestinationFolder(p));
+
+// Forward file received events and display system notifications
+transferService.on('file_received', (file) => {
+  try {
+    if (Notification.isSupported()) {
+      new Notification({
+        title: 'VS Drop — Arquivo Recebido',
+        body: `${file.name} recebido de ${file.sender} e salvo na pasta VS-Drop!`
+      }).show();
+    }
+  } catch (err) {}
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    try {
+      mainWindow.webContents.send('transfer-file-received', file);
+    } catch (e) {}
+  }
+});
+
+transferService.on('text_received', (msg) => {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    try {
+      mainWindow.webContents.send('transfer-text-received', msg);
+    } catch (e) {}
+  }
+});
 
 app.whenReady().then(() => {
   // Start local fallback server on port 3000
