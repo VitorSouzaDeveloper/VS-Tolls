@@ -153,6 +153,26 @@ function createServer(port = 3000) {
       visibility: transferService.visibility
     });
   });
+  app.post('/api/transfer/peers/register', (req, res) => {
+    const peer = req.body || {};
+    const remoteIp = req.socket.remoteAddress ? req.socket.remoteAddress.replace(/^.*:/, '') : peer.ip;
+    const registered = transferService.registerPeerDirectly({
+      ...peer,
+      ip: remoteIp || peer.ip
+    });
+    const { primaryIp } = transferService.getLanAddresses();
+    res.json({
+      success: !!registered,
+      macPeer: {
+        id: transferService.deviceId,
+        name: transferService.deviceName,
+        platform: 'mac',
+        ip: primaryIp,
+        port: port,
+        visibility: transferService.visibility
+      }
+    });
+  });
   app.post('/api/transfer/visibility', (req, res) => {
     const { visibility } = req.body || {};
     res.json({ success: true, visibility: transferService.setVisibility(visibility) });

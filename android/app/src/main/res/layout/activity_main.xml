@@ -138,12 +138,25 @@
                             android:textSize="13sp"
                             android:textStyle="bold" />
 
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnRefreshRadar"
+                            style="@style/Widget.Material3.Button.TextButton"
+                            android:layout_width="wrap_content"
+                            android:layout_height="32dp"
+                            android:text="🔄 Buscar"
+                            android:textColor="@color/accent_cyan"
+                            android:textSize="11sp"
+                            android:insetTop="0dp"
+                            android:insetBottom="0dp"
+                            android:paddingHorizontal="6dp" />
+
                         <TextView
                             android:id="@+id/textRadarCount"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:layout_marginStart="4dp"
                             android:text="0 encontrados"
-                            android:textColor="@color/accent_cyan"
+                            android:textColor="@color/text_muted"
                             android:textSize="11sp"
                             android:textStyle="bold" />
 

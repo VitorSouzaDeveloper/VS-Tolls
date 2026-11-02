@@ -90,6 +90,12 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent(this, QrScanActivity::class.java))
         }
 
+        binding.btnRefreshRadar.setOnClickListener {
+            Toast.makeText(this, "📡 Rastreando rede Wi-Fi...", Toast.LENGTH_SHORT).show()
+            discoveryService.triggerPing()
+            discoveryService.triggerSubnetSweep()
+        }
+
         binding.btnSendText.setOnClickListener {
             val text = binding.editTextShare.text.toString().trim()
             if (text.isEmpty()) {

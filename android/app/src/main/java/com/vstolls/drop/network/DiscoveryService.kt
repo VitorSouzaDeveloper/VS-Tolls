@@ -8,9 +8,8 @@ import com.vstolls.drop.util.DeviceUtils
 import com.vstolls.drop.util.PreferencesManager
 import kotlinx.coroutines.*
 import org.json.JSONObject
-import java.net.DatagramPacket
-import java.net.DatagramSocket
-import java.net.InetAddress
+import java.io.OutputStreamWriter
+import java.net.*
 import java.util.concurrent.ConcurrentHashMap
 
 class DiscoveryService(private val context: Context) {
@@ -50,8 +49,15 @@ class DiscoveryService(private val context: Context) {
         }
 
         scope.launch {
+            sweepLoop()
+        }
+
+        scope.launch {
             pruneLoop()
         }
+
+        // Trigger immediate HTTP sweep for instant detection
+        triggerSubnetSweep()
     }
 
     fun stop() {
@@ -71,14 +77,23 @@ class DiscoveryService(private val context: Context) {
     fun triggerPing() {
         scope.launch {
             sendBeacon(type = "ping")
+            probeSubnetHttp()
+        }
+    }
+
+    fun triggerSubnetSweep() {
+        scope.launch {
+            probeSubnetHttp()
         }
     }
 
     private suspend fun listenLoop() = withContext(Dispatchers.IO) {
         try {
-            socket = DatagramSocket(DISCOVERY_PORT).apply {
-                broadcast = true
+            // Must instantiate with null and set reuseAddress before binding
+            socket = DatagramSocket(null).apply {
                 reuseAddress = true
+                broadcast = true
+                bind(InetSocketAddress(DISCOVERY_PORT))
             }
 
             val buffer = ByteArray(4096)
@@ -146,6 +161,15 @@ class DiscoveryService(private val context: Context) {
         }
     }
 
+    private suspend fun sweepLoop() = withContext(Dispatchers.IO) {
+        while (isRunning) {
+            delay(10000)
+            if (prefs.visibilityMode != VisibilityMode.HIDDEN) {
+                probeSubnetHttp()
+            }
+        }
+    }
+
     private suspend fun pruneLoop() = withContext(Dispatchers.IO) {
         while (isRunning) {
             delay(5000)
@@ -154,7 +178,7 @@ class DiscoveryService(private val context: Context) {
             val it = discoveredPeersMap.entries.iterator()
             while (it.hasNext()) {
                 val entry = it.next()
-                if (now - entry.value.lastSeen > 12000) {
+                if (now - entry.value.lastSeen > 15000) {
                     it.remove()
                     changed = true
                 }
@@ -163,6 +187,27 @@ class DiscoveryService(private val context: Context) {
                 notifyPeersChanged()
             }
         }
+    }
+
+    private fun getAllBroadcastAddresses(): List<InetAddress> {
+        val list = mutableListOf<InetAddress>()
+        try {
+            val interfaces = NetworkInterface.getNetworkInterfaces()
+            while (interfaces.hasMoreElements()) {
+                val iface = interfaces.nextElement()
+                if (iface.isLoopback || !iface.isUp) continue
+                for (interfaceAddress in iface.interfaceAddresses) {
+                    val broadcast = interfaceAddress.broadcast
+                    if (broadcast != null) {
+                        list.add(broadcast)
+                    }
+                }
+            }
+        } catch (e: Exception) {}
+        try {
+            list.add(InetAddress.getByName("255.255.255.255"))
+        } catch (e: Exception) {}
+        return list.distinct()
     }
 
     private fun sendBeacon(type: String) {
@@ -180,11 +225,15 @@ class DiscoveryService(private val context: Context) {
             }
 
             val data = json.toString().toByteArray()
-            val broadcastAddr = InetAddress.getByName("255.255.255.255")
-            val packet = DatagramPacket(data, data.size, broadcastAddr, DISCOVERY_PORT)
+            val broadcastTargets = getAllBroadcastAddresses()
 
             val s = DatagramSocket().apply { broadcast = true }
-            s.send(packet)
+            for (target in broadcastTargets) {
+                try {
+                    val packet = DatagramPacket(data, data.size, target, DISCOVERY_PORT)
+                    s.send(packet)
+                } catch (e: Exception) {}
+            }
             s.close()
         } catch (e: Exception) {}
     }
@@ -213,6 +262,104 @@ class DiscoveryService(private val context: Context) {
         } catch (e: Exception) {}
     }
 
+    // Active Turbo Scan (Coroutines): Bypasses Wi-Fi router AP Isolation / UDP filtering
+    suspend fun probeSubnetHttp() = withContext(Dispatchers.IO) {
+        val localIp = DeviceUtils.getLocalIpAddress(context)
+        if (localIp == "127.0.0.1" || !localIp.contains(".")) return@withContext
+
+        val prefix = localIp.substringBeforeLast(".")
+        val currentHost = localIp.substringAfterLast(".").toIntOrNull() ?: -1
+
+        coroutineScope {
+            for (host in 1..254) {
+                if (host == currentHost) continue
+                launch {
+                    try {
+                        val targetIp = "$prefix.$host"
+                        val url = URL("http://$targetIp:3000/api/transfer/status")
+                        val conn = (url.openConnection() as HttpURLConnection).apply {
+                            connectTimeout = 300
+                            readTimeout = 400
+                            useCaches = false
+                        }
+                        if (conn.responseCode == 200) {
+                            val response = conn.inputStream.bufferedReader().use { it.readText() }
+                            val json = JSONObject(response)
+                            val discoveredMacIp = json.optString("primaryIp", targetIp)
+                            val macPort = json.optInt("port", 3000)
+
+                            val peer = DevicePeer(
+                                id = "mac_$discoveredMacIp",
+                                name = "MacBook / Mac",
+                                platform = "mac",
+                                ip = discoveredMacIp,
+                                port = macPort,
+                                visibility = json.optString("visibility", "everyone"),
+                                lastSeen = System.currentTimeMillis(),
+                                isPaired = prefs.isDevicePaired("mac_$discoveredMacIp")
+                            )
+                            discoveredPeersMap[peer.id] = peer
+                            notifyPeersChanged()
+
+                            // Immediately register back to Mac so Mac adds Android to its radar too
+                            registerToMacHttp(discoveredMacIp, macPort)
+                        }
+                        conn.disconnect()
+                    } catch (e: Exception) {}
+                }
+            }
+        }
+    }
+
+    fun registerToMacHttp(macIp: String, macPort: Int) {
+        scope.launch(Dispatchers.IO) {
+            try {
+                val url = URL("http://$macIp:$macPort/api/transfer/peers/register")
+                val conn = (url.openConnection() as HttpURLConnection).apply {
+                    requestMethod = "POST"
+                    doOutput = true
+                    connectTimeout = 1500
+                    readTimeout = 2000
+                    setRequestProperty("Content-Type", "application/json; charset=UTF-8")
+                }
+                val localIp = DeviceUtils.getLocalIpAddress(context)
+                val json = JSONObject().apply {
+                    put("id", prefs.deviceId)
+                    put("name", prefs.deviceName)
+                    put("platform", "android")
+                    put("ip", localIp)
+                    put("port", 8766)
+                    put("visibility", prefs.visibilityMode.key)
+                }
+                OutputStreamWriter(conn.outputStream, "UTF-8").use {
+                    it.write(json.toString())
+                    it.flush()
+                }
+                if (conn.responseCode == 200) {
+                    val resp = conn.inputStream.bufferedReader().use { it.readText() }
+                    val respJson = JSONObject(resp)
+                    val macInfo = respJson.optJSONObject("macPeer")
+                    if (macInfo != null) {
+                        val macId = macInfo.optString("id", "mac_$macIp")
+                        val peer = DevicePeer(
+                            id = macId,
+                            name = macInfo.optString("name", "MacBook"),
+                            platform = "mac",
+                            ip = macInfo.optString("ip", macIp),
+                            port = macInfo.optInt("port", macPort),
+                            visibility = macInfo.optString("visibility", "everyone"),
+                            lastSeen = System.currentTimeMillis(),
+                            isPaired = prefs.isDevicePaired(macId)
+                        )
+                        discoveredPeersMap[macId] = peer
+                        notifyPeersChanged()
+                    }
+                }
+                conn.disconnect()
+            } catch (e: Exception) {}
+        }
+    }
+
     private fun notifyPeersChanged() {
         val list = discoveredPeersMap.values.toList().sortedByDescending { it.isPaired }
         CoroutineScope(Dispatchers.Main).launch {
@@ -220,4 +367,3 @@ class DiscoveryService(private val context: Context) {
         }
     }
 }
-

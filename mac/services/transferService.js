@@ -668,6 +668,58 @@ class TransferService extends EventEmitter {
     }
   }
 
+  getAllBroadcastAddresses() {
+    const broadcasts = new Set(['255.255.255.255']);
+    try {
+      const interfaces = os.networkInterfaces();
+      for (const name of Object.keys(interfaces)) {
+        for (const iface of interfaces[name]) {
+          if (iface.family === 'IPv4' && !iface.internal && iface.address && iface.netmask) {
+            try {
+              const ipParts = iface.address.split('.').map(Number);
+              const maskParts = iface.netmask.split('.').map(Number);
+              if (ipParts.length === 4 && maskParts.length === 4) {
+                const bcast = ipParts.map((ip, i) => (ip | (~maskParts[i] & 255))).join('.');
+                broadcasts.add(bcast);
+              }
+            } catch (e) {}
+          }
+        }
+      }
+    } catch (e) {}
+    return Array.from(broadcasts);
+  }
+
+  registerPeerDirectly(peerData) {
+    if (!peerData || !peerData.id) return null;
+    if (peerData.id === this.deviceId) return null;
+
+    if (this.visibility === 'hidden') return null;
+    const isPaired = this.pairedDeviceIds.has(peerData.id);
+    if (this.visibility === 'paired' && !isPaired) return null;
+
+    const peerInfo = {
+      id: peerData.id,
+      name: peerData.name || 'Dispositivo',
+      platform: peerData.platform || 'android',
+      ip: peerData.ip,
+      port: peerData.port || 8766,
+      visibility: peerData.visibility || 'everyone',
+      lastSeen: Date.now(),
+      isPaired
+    };
+
+    const isNew = !this.discoveredPeers.has(peerData.id);
+    this.discoveredPeers.set(peerData.id, peerInfo);
+
+    if (isNew) {
+      this.broadcastPeersList();
+      this.emit('peer_discovered', peerInfo);
+    }
+
+    return peerInfo;
+  }
+
   broadcastBeacon() {
     if (!this.udpSocket || this.visibility === 'hidden') return;
     const { primaryIp } = this.getLanAddresses();
@@ -683,9 +735,12 @@ class TransferService extends EventEmitter {
     });
     const buf = Buffer.from(packet);
 
-    try {
-      this.udpSocket.send(buf, 0, buf.length, this.discoveryPort, '255.255.255.255');
-    } catch (e) {}
+    const bcastAddrs = this.getAllBroadcastAddresses();
+    for (const addr of bcastAddrs) {
+      try {
+        this.udpSocket.send(buf, 0, buf.length, this.discoveryPort, addr);
+      } catch (e) {}
+    }
   }
 
   sendPongTo(ip, port) {
