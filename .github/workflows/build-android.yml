@@ -21,9 +21,18 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '17'
+          cache: 'gradle'
 
-      - name: Configurar Android SDK
-        uses: android-actions/setup-android@v3
+      - name: Aceitar Licenças do Android SDK
+        run: |
+          mkdir -p "$ANDROID_HOME/licenses" || true
+          echo -e "\n24333f8a63b6825ea9c5514f83c2829b004d1fee\nd56f5187479451eabf01fb78af6dfcb131a6481e\n24333f8a63b6825ea9c5514f83c2829b004d1fee" > "$ANDROID_HOME/licenses/android-sdk-license"
+          echo -e "\n84831b9409646a918e30573bab4c9c91346d8abd" > "$ANDROID_HOME/licenses/android-sdk-preview-license"
+          if [ -d "$ANDROID_HOME/cmdline-tools/latest/bin" ]; then
+            yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses || true
+          elif command -v sdkmanager > /dev/null 2>&1; then
+            yes | sdkmanager --licenses || true
+          fi
 
       - name: Permissões de Execução do Gradle Wrapper
         run: chmod +x android/gradlew
@@ -39,4 +48,3 @@ jobs:
           name: VS-Drop-Android-Debug
           path: android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
-
