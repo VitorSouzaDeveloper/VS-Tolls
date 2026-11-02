@@ -122,6 +122,7 @@ function createServer(port = 3000) {
 
   // VS Drop — File Transfer Mac <-> Mobile (iPhone / Android)
   app.get('/drop', (req, res) => res.sendFile(path.join(__dirname, 'public', 'drop.html')));
+  app.post('/drop', (req, res) => res.redirect('/drop'));
   app.get('/transfer', (req, res) => res.sendFile(path.join(__dirname, 'public', 'drop.html')));
   app.get('/api/transfer/status', async (req, res) => res.json(await transferService.getStatus(port)));
   app.post('/api/transfer/upload', (req, res) => transferService.handleIncomingUpload(req, res));
@@ -145,10 +146,37 @@ function createServer(port = 3000) {
     res.json(transferService.setDestinationFolder(p));
   });
 
+  // Radar & Peer Discovery (AirDrop Style)
+  app.get('/api/transfer/peers', (req, res) => {
+    res.json({
+      peers: transferService.getDiscoveredPeers(),
+      visibility: transferService.visibility
+    });
+  });
+  app.post('/api/transfer/visibility', (req, res) => {
+    const { visibility } = req.body || {};
+    res.json({ success: true, visibility: transferService.setVisibility(visibility) });
+  });
+  app.post('/api/transfer/pair', (req, res) => {
+    const { peerId, paired } = req.body || {};
+    res.json({ success: true, paired: transferService.pairDevice(peerId, paired !== false) });
+  });
+  app.post('/api/transfer/send-to-peer', async (req, res) => {
+    const { peerId, path: p } = req.body || {};
+    res.json(await transferService.sendFileToPeer(peerId, p));
+  });
+
   const server = http.createServer(app);
 
   // Attach WebSocket Server for real-time mobile <-> desktop communication
   transferService.attachWebSocketServer(server);
+
+  // Initialize UDP Radar & Discovery service on port 8765
+  try {
+    transferService.initDiscoveryService(8765);
+  } catch (err) {
+    console.warn('[VS Drop] Não foi possível iniciar radar UDP:', err.message);
+  }
 
   server.on('error', (err) => {
     if (err.code === 'EADDRINUSE') {

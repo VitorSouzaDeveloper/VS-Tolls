@@ -50,6 +50,11 @@ contextBridge.exposeInMainWorld('vsTollsAPI', {
   transferClearReceived: () => ipcRenderer.invoke('transfer-clear-received'),
   transferSendText: (text) => ipcRenderer.invoke('transfer-send-text', text),
   transferSetFolder: (p) => ipcRenderer.invoke('transfer-set-folder', p),
+  transferGetPeers: () => ipcRenderer.invoke('transfer-get-peers'),
+  transferSetVisibility: (v) => ipcRenderer.invoke('transfer-set-visibility', v),
+  transferPairDevice: (id, paired) => ipcRenderer.invoke('transfer-pair-device', id, paired),
+  transferSendToPeer: (id) => ipcRenderer.invoke('transfer-send-to-peer', id),
   onTransferFileReceived: (cb) => ipcRenderer.on('transfer-file-received', (e, data) => cb(data)),
-  onTransferTextReceived: (cb) => ipcRenderer.on('transfer-text-received', (e, data) => cb(data))
+  onTransferTextReceived: (cb) => ipcRenderer.on('transfer-text-received', (e, data) => cb(data)),
+  onTransferPeersUpdated: (cb) => ipcRenderer.on('transfer-peers-updated', (e, data) => cb(data))
 });

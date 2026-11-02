@@ -1,6 +1,8 @@
 const os = require('os');
 const fs = require('fs');
 const path = require('path');
+const http = require('http');
+const dgram = require('dgram');
 const QRCode = require('qrcode');
 const ws = require('ws');
 const { EventEmitter } = require('events');
@@ -10,6 +12,16 @@ class TransferService extends EventEmitter {
     super();
     this.destinationFolder = path.join(os.homedir(), 'Downloads', 'VS-Drop');
     this.ensureDestinationFolder();
+
+    this.deviceId = 'mac_' + (os.hostname().toLowerCase().replace(/[^a-z0-9]/g, '') || 'vstolls') + '_' + Math.random().toString(36).substring(2, 6);
+    this.deviceName = os.hostname().replace(/\.local$/i, '') || 'MacBook Pro';
+    this.visibility = 'everyone'; // 'everyone' | 'paired' | 'hidden'
+    this.pairedDeviceIds = new Set();
+    this.discoveredPeers = new Map(); // id -> { id, name, platform, ip, port, lastSeen, isPaired }
+    this.udpSocket = null;
+    this.discoveryPort = 8765;
+    this.discoveryInterval = null;
+    this.pruneInterval = null;
 
     this.outgoingFiles = new Map(); // id -> { id, name, size, path, addedAt, mimeType, downloadCount }
     this.receivedFiles = []; // array of { id, name, size, path, receivedAt, sender }
@@ -502,7 +514,9 @@ class TransferService extends EventEmitter {
         outgoingFiles: this.getOutgoingFilesSummary(),
         receivedFiles: this.receivedFiles,
         recentTexts: this.recentTexts,
-        devices: this.getConnectedDevices()
+        devices: this.getConnectedDevices(),
+        visibility: this.visibility,
+        discoveredPeers: this.getDiscoveredPeers()
       }));
 
       // Notify all about updated device list
@@ -562,6 +576,220 @@ class TransferService extends EventEmitter {
     }
   }
 
+  // --- UDP Radar & Peer Discovery (AirDrop Style) ---
+
+  initDiscoveryService(port = 8765) {
+    if (this.udpSocket) return;
+    this.discoveryPort = port;
+
+    try {
+      this.udpSocket = dgram.createSocket({ type: 'udp4', reuseAddr: true });
+
+      this.udpSocket.on('error', (err) => {
+        console.warn('[VS Drop] Erro no socket UDP de descoberta:', err.message);
+      });
+
+      this.udpSocket.on('message', (msgBuf, rinfo) => {
+        try {
+          const raw = msgBuf.toString();
+          const data = JSON.parse(raw);
+          if (!data || data.protocol !== 'vs-drop') return;
+          if (data.id === this.deviceId) return; // Ignore our own beacon
+
+          // Check our visibility
+          if (this.visibility === 'hidden') return;
+          const isPaired = this.pairedDeviceIds.has(data.id);
+          if (this.visibility === 'paired' && !isPaired) {
+            // In paired-only mode, ignore unknown devices
+            return;
+          }
+
+          const peerInfo = {
+            id: data.id,
+            name: data.name || 'Dispositivo Desconhecido',
+            platform: data.platform || 'android',
+            ip: rinfo.address,
+            port: data.port || 8766,
+            visibility: data.visibility || 'everyone',
+            lastSeen: Date.now(),
+            isPaired
+          };
+
+          const isNew = !this.discoveredPeers.has(data.id);
+          this.discoveredPeers.set(data.id, peerInfo);
+
+          if (isNew) {
+            this.broadcastPeersList();
+            this.emit('peer_discovered', peerInfo);
+          }
+
+          // If it was a ping or beacon, reply with a unicast pong so peer learns about us immediately
+          if (data.type === 'ping' || data.type === 'beacon') {
+            this.sendPongTo(rinfo.address, data.port || rinfo.port);
+          }
+        } catch (e) {}
+      });
+
+      this.udpSocket.bind(this.discoveryPort, () => {
+        try {
+          this.udpSocket.setBroadcast(true);
+          console.log(`[VS Drop] Radar UDP ativo na porta ${this.discoveryPort}`);
+          this.broadcastBeacon();
+        } catch (e) {
+          console.warn('[VS Drop] Não foi possível ativar broadcast UDP:', e.message);
+        }
+      });
+
+      // Broadcast periodic beacon every 3s
+      if (this.discoveryInterval) clearInterval(this.discoveryInterval);
+      this.discoveryInterval = setInterval(() => {
+        if (this.visibility !== 'hidden') {
+          this.broadcastBeacon();
+        }
+      }, 3000);
+
+      // Prune inactive peers every 5s
+      if (this.pruneInterval) clearInterval(this.pruneInterval);
+      this.pruneInterval = setInterval(() => {
+        const now = Date.now();
+        let changed = false;
+        for (const [id, peer] of this.discoveredPeers.entries()) {
+          if (now - peer.lastSeen > 10000) {
+            this.discoveredPeers.delete(id);
+            changed = true;
+          }
+        }
+        if (changed) {
+          this.broadcastPeersList();
+        }
+      }, 5000);
+    } catch (err) {
+      console.warn('[VS Drop] Falha ao iniciar descoberta UDP:', err.message);
+    }
+  }
+
+  broadcastBeacon() {
+    if (!this.udpSocket || this.visibility === 'hidden') return;
+    const { primaryIp } = this.getLanAddresses();
+    const packet = JSON.stringify({
+      protocol: 'vs-drop',
+      type: 'beacon',
+      id: this.deviceId,
+      name: this.deviceName,
+      platform: 'mac',
+      ip: primaryIp,
+      port: this.currentPort,
+      visibility: this.visibility
+    });
+    const buf = Buffer.from(packet);
+
+    try {
+      this.udpSocket.send(buf, 0, buf.length, this.discoveryPort, '255.255.255.255');
+    } catch (e) {}
+  }
+
+  sendPongTo(ip, port) {
+    if (!this.udpSocket || this.visibility === 'hidden') return;
+    const { primaryIp } = this.getLanAddresses();
+    const packet = JSON.stringify({
+      protocol: 'vs-drop',
+      type: 'pong',
+      id: this.deviceId,
+      name: this.deviceName,
+      platform: 'mac',
+      ip: primaryIp,
+      port: this.currentPort,
+      visibility: this.visibility
+    });
+    const buf = Buffer.from(packet);
+
+    try {
+      this.udpSocket.send(buf, 0, buf.length, port, ip);
+    } catch (e) {}
+  }
+
+  broadcastPeersList() {
+    this.broadcast({
+      type: 'peers_updated',
+      peers: this.getDiscoveredPeers(),
+      visibility: this.visibility
+    });
+    this.emit('peers_updated', this.getDiscoveredPeers());
+  }
+
+  getDiscoveredPeers() {
+    const list = [];
+    for (const p of this.discoveredPeers.values()) {
+      list.push(p);
+    }
+    return list;
+  }
+
+  setVisibility(mode) {
+    if (!['everyone', 'paired', 'hidden'].includes(mode)) mode = 'everyone';
+    this.visibility = mode;
+    this.broadcastPeersList();
+    return this.visibility;
+  }
+
+  pairDevice(peerId, pair = true) {
+    if (!peerId) return false;
+    if (pair) {
+      this.pairedDeviceIds.add(peerId);
+    } else {
+      this.pairedDeviceIds.delete(peerId);
+    }
+    const peer = this.discoveredPeers.get(peerId);
+    if (peer) {
+      peer.isPaired = pair;
+    }
+    this.broadcastPeersList();
+    return pair;
+  }
+
+  async sendFileToPeer(peerId, filePath) {
+    const peer = this.discoveredPeers.get(peerId);
+    if (!peer) return { success: false, error: 'Dispositivo não encontrado ou offline' };
+    if (!fs.existsSync(filePath)) return { success: false, error: 'Arquivo local não encontrado' };
+
+    const stats = fs.statSync(filePath);
+    const fileName = path.basename(filePath);
+    const targetUrl = `http://${peer.ip}:${peer.port}/upload?filename=${encodeURIComponent(fileName)}&filesize=${stats.size}`;
+
+    return new Promise((resolve) => {
+      const parsed = new URL(targetUrl);
+      const req = http.request({
+        hostname: parsed.hostname,
+        port: parsed.port,
+        path: parsed.pathname + parsed.search,
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/octet-stream',
+          'Content-Length': stats.size,
+          'X-File-Name': encodeURIComponent(fileName),
+          'User-Agent': `VS-Drop-Mac (${this.deviceName})`
+        }
+      }, (res) => {
+        let body = '';
+        res.on('data', chunk => body += chunk);
+        res.on('end', () => {
+          if (res.statusCode >= 200 && res.statusCode < 300) {
+            resolve({ success: true, fileName, peerName: peer.name });
+          } else {
+            resolve({ success: false, error: `Erro HTTP ${res.statusCode}: ${body}` });
+          }
+        });
+      });
+
+      req.on('error', (err) => {
+        resolve({ success: false, error: err.message });
+      });
+
+      const fileStream = fs.createReadStream(filePath);
+      fileStream.pipe(req);
+    });
+  }
+
   // --- Snapshot Status ---
 
   async getStatus(port = this.currentPort) {
@@ -580,7 +808,9 @@ class TransferService extends EventEmitter {
       connectedDevices: this.getConnectedDevices(),
       outgoingFiles: this.getOutgoingFilesSummary(),
       receivedFiles: this.receivedFiles,
-      recentTexts: this.recentTexts
+      recentTexts: this.recentTexts,
+      visibility: this.visibility,
+      discoveredPeers: this.getDiscoveredPeers()
     };
   }
 }

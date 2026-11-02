@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/bg_app"
+    android:padding="20dp">
+
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/toolbarQr"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        app:title="Conectar via QR Code ou IP"
+        app:titleTextColor="@color/text_main"
+        app:navigationIcon="@android:drawable/ic_menu_revert" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Conexão Manual ou Direta"
+        android:textColor="@color/text_main"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:layout_marginTop="16dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Se o Mac não aparecer automaticamente no radar, você pode conectar inserindo o IP mostrado na tela do VS Tolls:"
+        android:textColor="@color/text_muted"
+        android:textSize="12sp"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="16dp" />
+
+    <EditText
+        android:id="@+id/editManualIp"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:background="@drawable/bg_input_box"
+        android:hint="Ex: 192.168.3.10"
+        android:textColorHint="@color/text_sub"
+        android:textColor="@color/text_main"
+        android:paddingHorizontal="12dp"
+        android:textSize="13sp"
+        android:inputType="textUri" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnConnectManualIp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Conectar ao Mac"
+        app:backgroundTint="@color/accent_blue"
+        android:layout_marginTop="12dp" />
+
+</LinearLayout>
+

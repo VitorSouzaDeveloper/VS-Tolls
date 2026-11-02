@@ -43,7 +43,11 @@ const api = window.vsTollsAPI || {
   transferClearOutgoing: () => (window.vsTollsAPI && window.vsTollsAPI.transferClearOutgoing) ? window.vsTollsAPI.transferClearOutgoing() : fetch('/api/transfer/outgoing', { method: 'DELETE' }).then(r => r.json()),
   transferClearReceived: () => (window.vsTollsAPI && window.vsTollsAPI.transferClearReceived) ? window.vsTollsAPI.transferClearReceived() : fetch('/api/transfer/received', { method: 'DELETE' }).then(r => r.json()),
   transferSendText: (text) => (window.vsTollsAPI && window.vsTollsAPI.transferSendText) ? window.vsTollsAPI.transferSendText(text) : fetch('/api/transfer/text', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text, from: 'MacBook' }) }).then(r => r.json()),
-  transferSetFolder: (p) => (window.vsTollsAPI && window.vsTollsAPI.transferSetFolder) ? window.vsTollsAPI.transferSetFolder(p) : fetch('/api/transfer/folder', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ path: p }) }).then(r => r.json())
+  transferSetFolder: (p) => (window.vsTollsAPI && window.vsTollsAPI.transferSetFolder) ? window.vsTollsAPI.transferSetFolder(p) : fetch('/api/transfer/folder', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ path: p }) }).then(r => r.json()),
+  transferGetPeers: () => (window.vsTollsAPI && window.vsTollsAPI.transferGetPeers) ? window.vsTollsAPI.transferGetPeers() : fetch('/api/transfer/peers').then(r => r.json()),
+  transferSetVisibility: (v) => (window.vsTollsAPI && window.vsTollsAPI.transferSetVisibility) ? window.vsTollsAPI.transferSetVisibility(v) : fetch('/api/transfer/visibility', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ visibility: v }) }).then(r => r.json()),
+  transferPairDevice: (id, paired) => (window.vsTollsAPI && window.vsTollsAPI.transferPairDevice) ? window.vsTollsAPI.transferPairDevice(id, paired) : fetch('/api/transfer/pair', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ peerId: id, paired }) }).then(r => r.json()),
+  transferSendToPeer: (id) => (window.vsTollsAPI && window.vsTollsAPI.transferSendToPeer) ? window.vsTollsAPI.transferSendToPeer(id) : fetch('/api/transfer/send-to-peer', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ peerId: id }) }).then(r => r.json())
 };
 
 // Global state
@@ -1154,7 +1158,9 @@ let transferState = {
   connectedDevices: [],
   outgoingFiles: [],
   receivedFiles: [],
-  recentTexts: []
+  recentTexts: [],
+  visibility: 'everyone',
+  discoveredPeers: []
 };
 let transferDesktopWs = null;
 
@@ -1202,6 +1208,12 @@ async function loadTransferUI() {
       folderDisplay.title = status.destinationFolder;
     }
 
+    const visibilitySelect = document.getElementById('transferVisibilitySelect');
+    if (visibilitySelect && status.visibility) {
+      visibilitySelect.value = status.visibility;
+    }
+
+    renderDiscoveredPeers(status.discoveredPeers || []);
     renderTransferDevices(status.connectedDevices || []);
     renderOutgoingFilesList(status.outgoingFiles || []);
     renderReceivedFilesList(status.receivedFiles || []);
@@ -1250,10 +1262,21 @@ function handleTransferWsEvent(data) {
         folderDisplay.title = data.destinationFolder;
       }
     }
+    if (data.visibility) {
+      const visibilitySelect = document.getElementById('transferVisibilitySelect');
+      if (visibilitySelect) visibilitySelect.value = data.visibility;
+    }
+    renderDiscoveredPeers(data.discoveredPeers || []);
     renderTransferDevices(data.devices || []);
     renderOutgoingFilesList(data.outgoingFiles || []);
     renderReceivedFilesList(data.receivedFiles || []);
     renderRecentTextsList(data.recentTexts || []);
+  } else if (data.type === 'peers_updated') {
+    renderDiscoveredPeers(data.peers || []);
+    if (data.visibility) {
+      const visibilitySelect = document.getElementById('transferVisibilitySelect');
+      if (visibilitySelect) visibilitySelect.value = data.visibility;
+    }
   } else if (data.type === 'devices_updated') {
     renderTransferDevices(data.devices || []);
   } else if (data.type === 'outgoing_files_updated') {
@@ -1280,6 +1303,92 @@ function handleTransferWsEvent(data) {
       folderDisplay.title = data.destinationFolder;
     }
   }
+}
+
+function renderDiscoveredPeers(peers) {
+  const container = document.getElementById('transferDiscoveredPeersList');
+  const countBadge = document.getElementById('transferPeersCountBadge');
+  if (!container) return;
+
+  const validPeers = (peers || []).filter(p => p.id !== transferState.deviceId);
+  transferState.discoveredPeers = validPeers;
+
+  if (countBadge) {
+    countBadge.innerText = `${validPeers.length} no Radar`;
+    countBadge.className = validPeers.length > 0 ? 'badge-status-good' : 'badge-status-neutral';
+  }
+
+  if (validPeers.length === 0) {
+    container.innerHTML = `
+      <div class="transfer-peers-empty">
+        <div class="radar-scan-anim">📡</div>
+        <div style="font-size:12px; font-weight:600; color:var(--text-main); margin-top:4px;">Rastreando rede Wi-Fi...</div>
+        <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">Abra o app VS Drop no Android ou envie via Compartilhar nativo.</div>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = validPeers.map(p => {
+    const isAndroid = (p.platform || '').toLowerCase().includes('android');
+    const icon = isAndroid ? '📱' : '💻';
+    return `
+      <div class="transfer-peer-card">
+        <div style="display:flex; align-items:center; gap:10px; overflow:hidden;">
+          <div class="transfer-peer-icon">${icon}</div>
+          <div style="overflow:hidden;">
+            <div style="font-size:12.5px; font-weight:700; color:var(--text-main); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+              ${escapeHtml(p.name)}
+            </div>
+            <div style="font-size:10.5px; color:var(--text-muted); font-family:var(--font-mono);">
+              ${escapeHtml(p.ip)} · ${isAndroid ? 'Android' : 'Mac'} ${p.isPaired ? '· ⭐ Pareado' : ''}
+            </div>
+          </div>
+        </div>
+        <div style="display:flex; gap:6px; flex-shrink:0;">
+          <button class="btn-action-sm btn-send-to-peer" data-peer-id="${escapeHtml(p.id)}" style="background:var(--accent-blue); color:#fff; border:none; padding:4px 10px;">
+            📤 Enviar
+          </button>
+          <button class="btn-action-sm btn-pair-peer" data-peer-id="${escapeHtml(p.id)}" data-paired="${p.isPaired ? 'true' : 'false'}" title="${p.isPaired ? 'Remover pareamento' : 'Marcar como confiável'}">
+            ${p.isPaired ? '⭐ Pareado' : 'Parear'}
+          </button>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  container.querySelectorAll('.btn-send-to-peer').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const peerId = btn.getAttribute('data-peer-id');
+      if (api.transferSendToPeer) {
+        btn.innerText = 'Enviando...';
+        btn.disabled = true;
+        try {
+          const res = await api.transferSendToPeer(peerId);
+          if (res && res.success) {
+            btn.innerText = '✅ Enviado!';
+            setTimeout(() => { btn.innerText = '📤 Enviar'; btn.disabled = false; }, 2000);
+          } else {
+            btn.innerText = '📤 Enviar';
+            btn.disabled = false;
+          }
+        } catch (e) {
+          btn.innerText = '📤 Enviar';
+          btn.disabled = false;
+        }
+      }
+    });
+  });
+
+  container.querySelectorAll('.btn-pair-peer').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const peerId = btn.getAttribute('data-peer-id');
+      const isCurrentlyPaired = btn.getAttribute('data-paired') === 'true';
+      if (api.transferPairDevice) {
+        await api.transferPairDevice(peerId, !isCurrentlyPaired);
+      }
+    });
+  });
 }
 
 function renderTransferDevices(devices) {
@@ -1616,6 +1725,33 @@ function initTransferEvents() {
     });
   }
 
+  // AirDrop Visibility selector
+  const visibilitySelect = document.getElementById('transferVisibilitySelect');
+  if (visibilitySelect) {
+    visibilitySelect.addEventListener('change', async (e) => {
+      const mode = e.target.value;
+      if (api.transferSetVisibility) {
+        await api.transferSetVisibility(mode);
+      }
+    });
+  }
+
+  // Web QR Code Details Accordion toggle
+  const toggleWebCard = document.getElementById('toggleWebTransferCard');
+  const webDetailsBox = document.getElementById('webTransferDetailsBox');
+  const btnToggleWeb = document.getElementById('btnToggleWebTransferDetails');
+  if (toggleWebCard && webDetailsBox) {
+    toggleWebCard.addEventListener('click', (e) => {
+      // Don't toggle if clicking buttons or inputs inside
+      if (e.target.closest('input') || e.target.closest('#btnTransferCopyUrl') || e.target.closest('#btnTransferOpenBrowser') || e.target.closest('#btnTransferRefreshQr')) return;
+      const isHidden = webDetailsBox.style.display === 'none';
+      webDetailsBox.style.display = isHidden ? 'block' : 'none';
+      if (btnToggleWeb) {
+        btnToggleWeb.innerText = isHidden ? 'Ocultar QR Code ▴' : 'Mostrar QR Code ▾';
+      }
+    });
+  }
+
   if (btnSendText && textInput) {
     let isSendingText = false;
     const send = async () => {
@@ -1654,6 +1790,15 @@ if (window.vsTollsAPI && window.vsTollsAPI.onTransferFileReceived) {
 if (window.vsTollsAPI && window.vsTollsAPI.onTransferTextReceived) {
   window.vsTollsAPI.onTransferTextReceived((msg) => {
     addSharedTextMessage(msg);
+  });
+}
+if (window.vsTollsAPI && window.vsTollsAPI.onTransferPeersUpdated) {
+  window.vsTollsAPI.onTransferPeersUpdated((data) => {
+    if (data && data.peers) renderDiscoveredPeers(data.peers);
+    if (data && data.visibility) {
+      const visibilitySelect = document.getElementById('transferVisibilitySelect');
+      if (visibilitySelect) visibilitySelect.value = data.visibility;
+    }
   });
 }
 

@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@color/bg_card"
+    android:padding="20dp">
+
+    <!-- Handle Bar -->
+    <View
+        android:layout_width="40dp"
+        android:layout_height="4dp"
+        android:layout_gravity="center_horizontal"
+        android:background="@color/border_color"
+        android:layout_marginBottom="16dp" />
+
+    <!-- Header Row -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Enviar com VS Drop"
+            android:textColor="@color/text_main"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/textShareItemsSummary"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="1 item selecionado"
+            android:textColor="@color/accent_cyan"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
+    </LinearLayout>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Toque em um dispositivo próximo para transferir na hora:"
+        android:textColor="@color/text_muted"
+        android:textSize="12sp"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="16dp" />
+
+    <!-- Transfer Progress Box (visible during transfer) -->
+    <LinearLayout
+        android:id="@+id/layoutTransferProgress"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@drawable/bg_input_box"
+        android:padding="12dp"
+        android:visibility="gone"
+        android:layout_marginBottom="14dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/textProgressFileName"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Enviando arquivo..."
+                android:textColor="@color/text_main"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:maxLines="1"
+                android:ellipsize="end" />
+
+            <TextView
+                android:id="@+id/textProgressPercent"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0%"
+                android:textColor="@color/accent_cyan"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+        </LinearLayout>
+
+        <com.google.android.material.progressindicator.LinearProgressIndicator
+            android:id="@+id/progressBar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="6dp"
+            app:trackColor="@color/border_color"
+            app:indicatorColor="@color/accent_cyan"
+            android:progress="0" />
+
+        <TextView
+            android:id="@+id/textProgressSpeed"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Calculando velocidade..."
+            android:textColor="@color/text_muted"
+            android:textSize="10.5sp" />
+
+    </LinearLayout>
+
+    <!-- Discovered Devices List -->
+    <LinearLayout
+        android:id="@+id/layoutSharePeersList"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:minHeight="120dp">
+
+        <TextView
+            android:id="@+id/textShareSearching"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="📡 Rastreando Mac ou PCs na rede local...\nCertifique-se de que o VS Tolls esteja aberto no Mac."
+            android:textColor="@color/text_sub"
+            android:textSize="12sp"
+            android:gravity="center"
+            android:padding="24dp" />
+
+    </LinearLayout>
+
+    <!-- Fallback QR Code Scanner option -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnShareScanQr"
+        style="@style/Widget.Material3.Button.TextButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Dispositivo não apareceu? Escanear QR Code do Mac"
+        android:textColor="@color/accent_blue"
+        android:textSize="11.5sp"
+        android:layout_marginTop="8dp" />
+
+</LinearLayout>
+

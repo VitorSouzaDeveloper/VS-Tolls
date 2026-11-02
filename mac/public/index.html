@@ -906,12 +906,22 @@
         <section id="page-transfer" class="view-page">
           <div class="page-title-row">
             <div>
-              <h2>VS Drop — Transferência Mac ⇄ iPhone / Android</h2>
+              <h2>VS Drop — Transferência Mac ⇄ Android / iPhone</h2>
               <div style="font-size:12px; color:var(--text-muted); margin-top:3px;">
-                Transferência ultrarrápida ponto a ponto via Wi-Fi local sem limites de tamanho, sem nuvem e sem compressão (estilo Blip / AirDrop).
+                Descoberta automática via Wi-Fi local (estilo AirDrop / Quick Share), sem nuvem e sem limites de tamanho.
               </div>
             </div>
             <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:flex-end;">
+              <!-- Visibility Selector -->
+              <div class="transfer-visibility-pill" title="Controle quem pode ver este Mac na rede Wi-Fi local">
+                <span style="font-size:11px; color:var(--text-muted); margin-right:4px;">Visibilidade:</span>
+                <select id="transferVisibilitySelect" class="transfer-visibility-select">
+                  <option value="everyone">🟢 Visível para Todos</option>
+                  <option value="paired">🟡 Apenas Pareados</option>
+                  <option value="hidden">🔴 Invisível (Oculto)</option>
+                </select>
+              </div>
+
               <div class="transfer-folder-pill" title="Pasta de destino onde os arquivos são salvos">
                 <span style="color:var(--text-muted); font-size:11px;">Destino:</span>
                 <span id="transferFolderDisplay" style="font-family:var(--font-mono); font-size:11px; font-weight:600;">~/Downloads/VS-Drop</span>
@@ -922,50 +932,45 @@
               <button id="btnTransferSelectFolder" class="btn-action-sm" title="Escolher outra pasta para salvar os arquivos">
                 Alterar Pasta...
               </button>
-              <button id="btnTransferOpenBrowser" class="btn-action-sm" title="Abrir interface web no navegador">
-                🌐 Abrir Web
-              </button>
             </div>
           </div>
 
-          <!-- Top Row: Connection & Pairing Card -->
+          <!-- Top Row: Radar de Dispositivos Locais & Área de Transferência -->
           <div class="two-col-grid" style="margin-bottom:16px;">
-            <!-- QR Code & Connection Card -->
+            <!-- Card 1: Radar AirDrop (Descoberta Automática de Android / Celulares) -->
             <div class="card">
               <div class="card-title-row" style="margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
-                <div class="card-title">1. Conectar iPhone ou Android</div>
-                <div id="transferDeviceStatusBadge" class="badge-status-neutral">Aguardando celular...</div>
-              </div>
-              <div style="display:flex; gap:16px; align-items:center;">
-                <div class="transfer-qr-box">
-                  <img id="transferQrImg" src="" alt="QR Code" style="width:120px; height:120px; border-radius:10px; display:block; background:#fff; padding:4px;">
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <span class="radar-pulse-dot"></span>
+                  <div class="card-title">Radar de Dispositivos (Descoberta Automática)</div>
                 </div>
-                <div style="flex:1; min-width:0;">
-                  <div style="font-size:13px; font-weight:600; color:var(--text-main); margin-bottom:4px;">
-                    Aponte a câmera do celular para o QR Code
-                  </div>
-                  <div style="font-size:11.5px; color:var(--text-muted); line-height:1.35; margin-bottom:10px;">
-                    Certifique-se de que o iPhone ou Android esteja conectado na mesma rede Wi-Fi que este Mac. Sem necessidade de instalar nenhum app!
-                  </div>
-                  <div style="display:flex; align-items:center; gap:6px; width:100%;">
-                    <input type="text" id="transferUrlInput" readonly class="transfer-url-input" value="http://127.0.0.1:3000/drop" title="Clique para selecionar tudo" onclick="this.select()">
-                    <button id="btnTransferCopyUrl" class="btn-action-sm" title="Copiar endereço" style="flex-shrink:0;">📋 Copiar</button>
-                    <button id="btnTransferRefreshQr" class="btn-action-sm" title="Atualizar IP / QR Code" style="flex-shrink:0; padding:4px 8px;">🔄</button>
-                  </div>
+                <div id="transferPeersCountBadge" class="badge-status-neutral">0 no Radar</div>
+              </div>
+
+              <div style="font-size:11.5px; color:var(--text-muted); margin-bottom:12px; line-height:1.4;">
+                Dispositivos com o app <strong>VS Drop Android</strong> ou Mac na mesma rede Wi-Fi aparecem automaticamente abaixo, sem precisar de QR Code:
+              </div>
+
+              <!-- Discovered Peers Container -->
+              <div id="transferDiscoveredPeersList" class="transfer-peers-container">
+                <div class="transfer-peers-empty">
+                  <div class="radar-scan-anim">📡</div>
+                  <div style="font-size:12px; font-weight:600; color:var(--text-main); margin-top:4px;">Rastreando rede Wi-Fi...</div>
+                  <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">Abra o app VS Drop no Android ou envie via Compartilhar nativo.</div>
                 </div>
               </div>
             </div>
 
-            <!-- Dispositivos Conectados & Clipboard -->
+            <!-- Card 2: Dispositivos Conectados & Compartilhamento Rápido -->
             <div class="card">
               <div class="card-title-row" style="margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
                 <div class="card-title">Dispositivos & Área de Transferência</div>
                 <div id="transferClientCountBadge" class="badge-status-good" style="display:none;">1 Conectado</div>
               </div>
               
-              <!-- Connected Devices Pill List -->
+              <!-- Connected Web Devices Chips -->
               <div id="transferDevicesList" class="transfer-devices-container" style="margin-bottom:12px;">
-                <div style="font-size:11.5px; color:var(--text-muted);">Nenhum celular conectado no momento.</div>
+                <div style="font-size:11.5px; color:var(--text-muted);">Nenhum celular conectado via Web no momento.</div>
               </div>
 
               <!-- Quick Text Share -->
@@ -977,6 +982,42 @@
                 </div>
                 <div id="transferRecentTexts" style="margin-top:8px; max-height:80px; overflow-y:auto; display:flex; flex-direction:column; gap:4px;">
                   <!-- Dynamic text snippets -->
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Alternative Option Accordion / Card: Conectar sem App (Via QR Code / Web PWA) -->
+          <div class="card" style="margin-bottom:16px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;" id="toggleWebTransferCard">
+              <div style="display:flex; align-items:center; gap:8px;">
+                <span style="font-size:16px;">📷</span>
+                <div>
+                  <div style="font-size:13px; font-weight:700; color:var(--text-main);">Opção sem App: Conectar via Câmera / QR Code (iPhone ou Android)</div>
+                  <div style="font-size:11px; color:var(--text-muted);">Para quem não quer instalar o app: basta apontar a câmera do celular para o QR Code</div>
+                </div>
+              </div>
+              <button class="btn-action-sm" id="btnToggleWebTransferDetails">Mostrar QR Code ▾</button>
+            </div>
+
+            <div id="webTransferDetailsBox" style="display:none; margin-top:14px; border-top:1px solid var(--border-color); padding-top:14px;">
+              <div style="display:flex; gap:16px; align-items:center;">
+                <div class="transfer-qr-box">
+                  <img id="transferQrImg" src="" alt="QR Code" style="width:120px; height:120px; border-radius:10px; display:block; background:#fff; padding:4px;">
+                </div>
+                <div style="flex:1; min-width:0;">
+                  <div style="font-size:13px; font-weight:600; color:var(--text-main); margin-bottom:4px;">
+                    Aponte a câmera do celular para o QR Code
+                  </div>
+                  <div style="font-size:11.5px; color:var(--text-muted); line-height:1.35; margin-bottom:10px;">
+                    Certifique-se de que o celular esteja na mesma rede Wi-Fi que este Mac. Sem necessidade de instalar nenhum app!
+                  </div>
+                  <div style="display:flex; align-items:center; gap:6px; width:100%;">
+                    <input type="text" id="transferUrlInput" readonly class="transfer-url-input" value="http://127.0.0.1:3000/drop" title="Clique para selecionar tudo" onclick="this.select()">
+                    <button id="btnTransferCopyUrl" class="btn-action-sm" title="Copiar endereço" style="flex-shrink:0;">📋 Copiar</button>
+                    <button id="btnTransferOpenBrowser" class="btn-action-sm" title="Abrir interface web no navegador" style="flex-shrink:0;">🌐 Abrir Web</button>
+                    <button id="btnTransferRefreshQr" class="btn-action-sm" title="Atualizar IP / QR Code" style="flex-shrink:0; padding:4px 8px;">🔄</button>
+                  </div>
                 </div>
               </div>
             </div>

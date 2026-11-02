@@ -19,12 +19,18 @@
     2. **Mini Barra de Status (Ultra Compacta)**: Barra horizontal fina de apenas 52px de altura para cantos de tela (340×52px).
     3. **MacBook Bateria & MagSafe**: Saúde percentual, potência do carregador em Watts, ciclos e autonomia (210×195px).
     4. **Memória RAM & Limpeza Rápida**: Detalhamento de RAM com botão interativo de **Purge** direto da mesa (230×195px).
-- **VS Drop — Transferência de Arquivos Mac ⇄ iPhone / Android (Estilo Blip / AirDrop)**:
-  - **Zero Instalação no Celular**: Basta abrir a câmera do iPhone ou Android e apontar para o QR Code gerado no VS Tolls para conectar instantaneamente.
+- **VS Drop — Transferência de Arquivos Mac ⇄ iPhone / Android (Estilo AirDrop / Quick Share)**:
+  - **App Nativo para Android (`android/`)**:
+    - **Compartilhar Nativo do Android (`Intent.ACTION_SEND` e `SEND_MULTIPLE`)**: Envie fotos da Galeria, vídeos, zips, documentos ou textos direto do menu de compartilhamento do Android tocando em **Enviar com VS Drop**.
+    - **Radar Automático de Rede (UDP Discovery na porta 8765)**: Rastreamento automático e instantâneo de Macs disponíveis no mesmo Wi-Fi, **eliminando a necessidade de escanear QR Code** quando o app está instalado.
+    - **Modos de Visibilidade (AirDrop)**: Escolha entre **Todos na Rede**, **Apenas Pareados** ou **Invisível (Oculto)** no celular e no Mac.
+    - **Recepção Automática no Celular**: Arquivos recebidos do Mac são salvos na pasta `Downloads/VS-Drop` e registrados na `MediaStore` para aparecerem instantaneamente na Galeria do celular e no Google Fotos.
+  - **Opção Alternativa Web / QR Code (Sem Instalar App)**:
+    - Quem não quiser instalar o app no celular ainda pode conectar apontando a câmera do iPhone ou Android para o QR Code gerado no VS Tolls para abrir a interface Web PWA.
   - **Transferência Bidirecional Direta**:
-    - **Mac ➔ Celular**: Arraste qualquer foto, vídeo 4K, zip ou pasta no Mac e baixe no celular com 1 toque na velocidade máxima do Wi-Fi local.
+    - **Mac ➔ Celular**: Arraste qualquer foto, vídeo 4K, zip ou pasta no Mac e envie para o celular com 1 clique na velocidade máxima do Wi-Fi local.
     - **Celular ➔ Mac**: Envie fotos da galeria, vídeos ou arquivos do celular diretamente para o seu Mac (`~/Downloads/VS-Drop`).
-  - **Sem Limites de Tamanho e Sem Compressão**: Arquivos mantidos na qualidade máxima original, transferidos via streaming HTTP/Socket local sem passar por servidores na nuvem.
+  - **Sem Limites de Tamanho e Sem Compressão**: Arquivos mantidos na qualidade máxima original, transferidos via streaming local sem passar por servidores na nuvem.
   - **Monitoramento em Tempo Real**: Progresso animado, velocidade em MB/s, tempo restante e notificações nativas do macOS no término do envio.
   - **Área de Transferência & Links Rápidos**: Compartilhamento instantâneo de anotações, links e chaves Pix com botão de cópia com 1 toque.
   - **Controle de Destino & Finder**: Botão direto para abrir a pasta de transferências no Finder ou escolher outro diretório do disco.

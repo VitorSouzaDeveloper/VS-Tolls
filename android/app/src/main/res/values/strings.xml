@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">VS Drop</string>
+    <string name="share_target_title">Enviar via VS Drop</string>
+    <string name="radar_title">Radar de Dispositivos Locais</string>
+    <string name="radar_subtitle">Dispositivos disponíveis na mesma rede Wi-Fi</string>
+    <string name="visibility_title">Visibilidade</string>
+    <string name="visibility_everyone">Todos na Rede</string>
+    <string name="visibility_paired">Apenas Pareados</string>
+    <string name="visibility_hidden">Invisível (Oculto)</string>
+    <string name="send_files">Enviar Arquivos</string>
+    <string name="send_text">Enviar Texto / Link</string>
+    <string name="scan_qr_fallback">Escanear QR Code do Mac</string>
+    <string name="recent_transfers">Transferências Recentes</string>
+</resources>
+

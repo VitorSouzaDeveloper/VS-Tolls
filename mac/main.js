@@ -283,6 +283,27 @@ ipcMain.handle('transfer-clear-outgoing', () => transferService.clearOutgoingFil
 ipcMain.handle('transfer-clear-received', () => transferService.clearReceivedFiles());
 ipcMain.handle('transfer-send-text', (e, text) => transferService.sendTextMessage(text, 'MacBook'));
 ipcMain.handle('transfer-set-folder', (e, p) => transferService.setDestinationFolder(p));
+ipcMain.handle('transfer-get-peers', () => ({
+  peers: transferService.getDiscoveredPeers(),
+  visibility: transferService.visibility
+}));
+ipcMain.handle('transfer-set-visibility', (e, mode) => transferService.setVisibility(mode));
+ipcMain.handle('transfer-pair-device', (e, id, paired) => transferService.pairDevice(id, paired));
+ipcMain.handle('transfer-send-to-peer', async (e, peerId) => {
+  if (!mainWindow || mainWindow.isDestroyed()) return { success: false };
+  const res = await dialog.showOpenDialog(mainWindow, {
+    title: 'Escolher Arquivos para Enviar ao Dispositivo',
+    properties: ['openFile', 'multiSelections']
+  });
+  if (!res.canceled && res.filePaths && res.filePaths.length > 0) {
+    const results = [];
+    for (const fp of res.filePaths) {
+      results.push(await transferService.sendFileToPeer(peerId, fp));
+    }
+    return { success: true, count: results.length, results };
+  }
+  return { success: false, canceled: true };
+});
 
 // Forward file received events and display system notifications
 transferService.on('file_received', (file) => {
@@ -305,6 +326,14 @@ transferService.on('text_received', (msg) => {
   if (mainWindow && !mainWindow.isDestroyed()) {
     try {
       mainWindow.webContents.send('transfer-text-received', msg);
+    } catch (e) {}
+  }
+});
+
+transferService.on('peers_updated', (peers) => {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    try {
+      mainWindow.webContents.send('transfer-peers-updated', { peers, visibility: transferService.visibility });
     } catch (e) {}
   }
 });
