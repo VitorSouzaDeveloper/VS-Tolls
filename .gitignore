@@ -25,3 +25,12 @@ dist/
 *.dmg
 .playwright-mcp/
 .DS_Store
+
+# Android
+.gradle/
+build/
+android/.gradle/
+android/app/build/
+android/apk-build/
+*.apk
+
